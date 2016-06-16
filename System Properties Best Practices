@@ -1,0 +1,119 @@
+{{Technical Best Practices}}
+[[Category: Maintenance Best Practices]]
+
+= Overview  =
+
+System properties consist of a name, description, information type (for example, integer, string, true | false, and so forth), and system value.  Using a system property instead of a hard-coded value in server-side scripts makes the system easier to maintain and gives you the flexibility to make changes to the system's behavior without reprogramming. 
+
+You can use the system properties already defined in the System Property [sys_properties] table, or you can create your own system properties to perform custom functions in the system.  It is recommended that you [[#Define a Naming Convention for System Properties|use a standard naming convention]] for system properties, and create property categories for grouping related system properties.
+
+These best practices are described in a sample scenario.
+
+= Video Tutorial =
+This video explains how system administrators can manage script behavior and reduce the cost of maintaining scripts by using system properties to pass values to server-side scripts rather than hard-coding those values into the scripts. 
+
+{| border="1" cellspacing="0" cellpadding="5" align="center"
+! ServiceNow System Properties Best Practices
+|-
+| {{#ev:youtube|q48Qr-cC-hM|500}}
+|}
+
+= Sample Scenario =
+
+Assume you have been working with Acme Corporation's change management group to define their change process. While creating technical solutions, you have defined system-specific values, including:
+
+{| class="standard"
+!Name
+!Value
+|-
+|Default assignment group
+|EU Infrastructure
+|-
+|Change coordinator
+|Anna Johns
+|-
+|Task reminder period
+|3 days
+|-
+|Approval reminder period
+|2 days
+|-
+|Closure approval group
+|EU Quality
+|-
+|Default change template
+|Standard Change Template
+|-
+|Change debug
+|false
+|-
+|}
+
+If you enter these values in server-side scripts and later need to change any of the values, you must manually change each instance of the values. This can be time-consuming and costly. An example of this might be changing the Default assignment group from EU Infrastructure to US Infrastructure.
+
+The solution is to create system properties and have scripts use the values contained in the properties. When a system change is required, it is easy to make the change in a single system property. 
+
+One of the challenges to having several properties is managing them. While it is possible to search for the desired property from the System Property [sys_properties] table, it is a good idea to create properties pages to group related properties. Properties pages allow you to easily change property values and remove the risk of someone making changes to other fields on the property, such as type or description.
+
+== Define a Naming Convention for System Properties ==
+
+All properties have a '''Name''' field. By convention, the name of a property uses dot notation (for example, change'''.'''conflict'''.'''blackout). Before you create properties, define a naming standard. Using a naming standard makes it easier to filter lists of properties. Consider these suggestions when defining a naming standard:
+
+*Begin property names with your organization name (for example, ''acme.default.groupname'').
+*Begin debug property names with the string '''debug''' (for example, ''acme.debug.idle.timeout'').
+*Include the name of a script the property pertains to (for example, ''acme.debug.ChangeUtils'').
+*Include the name of the application or process the property pertains to (for example, ''acme.loaner.return.reminder'').
+
+== Create New Properties for Acme Corp.==
+
+You can create new properties and then [[#Grouping Properties into Categories|add related properties to categories]].
+{{Note|Before creating a property, check to see if there is an [[Available System Properties|existing property]] with the same functionality.}}
+#In the application navigator filter, enter '''sys_properties.list'''.
+#Click '''New'''.
+#Fill in the following fields on the System Property form:
+#*'''Name''': ''acme.change.default.assignment.group''.
+#*'''Description''': ''Enter the group name of the default assignment group''. 
+#*'''Type''': ''string''.
+#*'''Value''': ''EU Infrastructure''.
+#Click '''Submit'''.
+#Repeat for any other properties you want to define using the appropriate names, descriptions, types, and values.
+
+== Group Properties into Categories ==
+
+To make organizing system properties for Acme Corporation's change management process easier, you can create property categories.
+
+#Navigate to '''System Properties > Categories'''.
+#Click '''New'''.
+#In the '''Name''' field, enter '''Acme Change'''.
+#In the '''Title''' field, enter '''Properties to control the Acme CM process'''.
+#Right-click the header bar and select '''Save'''.
+#In the '''Properties''' related list, click '''Edit'''.
+#Using the [[Slushbucket|slushbucket]], add the desired properties to the '''Properties List''' column. 
+#:In this example, select anything that starts with '''acme.change'''.
+#Click '''Save'''.
+#:The properties are added to the related list. The '''Order''' field indicates the order in which the properties will be displayed on the [[#Create a Properties Page|properties page]] when you create it. Change the order as needed.
+
+== Create a Properties Page ==
+
+An easy way to access system properties is to create a properties page.  In this scenario, a new properties page is added to the Change application.
+
+#Right-click the '''Change''' application and select '''Edit Application Menu''' (Calgary release) or '''Edit Application''' (versions prior to Calgary).
+#:Any application can be launched in this manner.
+#In the '''Modules''' related list, click '''New'''. 
+#:Make a note of the order of the existing modules and determine where you want the new Properties module to appear.
+#Fill in the following fields on the Module form:
+#*'''Title:''' ''Properties''
+#*'''Order:''' Enter a value for the desired order of the module
+#*'''Image:''' Select an icon for the module (most properties modules in the base system use [[Image:Icon-reference.png]])
+#*'''Link type:''' ''URL (from Arguments:)''
+#*'''Roles:''' ''admin'' (Click the lock icon and use the slushbucket)
+#*'''Arguments:''': ''system_properties_ui.do?sysparm_title=Acme%20Change%20Properties&sysparm_category=Acme Change''
+#Click '''Submit'''.
+#:The application navigator refreshes automatically and the new module appears. 
+#Click the Properties module to see the new properties page, which contain the properties added to the category in the previous procedure.
+
+== Use Properties in Server-Side Scripts ==
+
+Properties make it easy to change the behavior of the system. Use a property in a server-side script with the [[GlideSystem#getProperty.28String.2C_Object.29|<tt>gs.getProperty()</tt>]] call, as in the example found in [[Debugging_Tools_Best_Practices|Debugging Tools Best Practices]].
+
+Creating and using properties makes maintenance quicker and easier. Organizing related properties in pages makes it easier to access those properties.

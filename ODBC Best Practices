@@ -1,0 +1,72 @@
+{{Technical Best Practices}} [[Category:Maintenance Best Practices|*]]
+
+{{LimitedTOC|2}}
+__NOTOC__  
+
+= Overview  =
+
+Performance issues can arise on the ODBC driver in your ServiceNow instance. This article provides troubleshooting tips to avoid common pitfalls that can impact performance.
+
+{{Note|It is recommended that you [[ODBC_Driver#Installation|upgrade to the latest version of the ODBC driver]].}}
+
+= ODBC Driver Best Practices =
+
+== Perform SOAP Load Testing ==
+The ODBC driver uses SOAP message calls to execute queries. Use a load testing tool such as SoapUI to perform web services stress testing. Be sure to include active user sessions during the load testing to better simulate production environment usage. If your SOAP load test performs poorly, contact support to request additional dedicated SOAP semaphores to manage your anticipated ODBC traffic.
+
+== Avoid Joins ==
+Since SQL joins are used to combine rows from two or more tables, they should be avoided as they can impact performance.  Database views perform essentially the same function as joins, while reducing the affect on system performance.   A number of useful database views are installed with the [[Database_Views_Plugin|Database Views]] plugin.
+
+== Use WHERE Clauses in Queries Efficiently==
+
+In queries with a WHERE clause that references a table column, always format the WHERE clause so that the column name appears before (that is, to the left of) the condition.  
+
+For example, if you want to select all incidents that are active, the following form would be the correct way to write the query in order to improve performance:
+
+ select * from incidents
+ where active = 1
+
+The following form would potentially give bad results or even error out:
+
+ select * from incident
+ where 1 = active
+
+== Consistent Use of Timezones in Queries ==
+
+When you are performing time/date-bounded queries, it is important to ensure that both the client and users be set to the same timezone in order to avoid time lapses.  GlideRecord performs filtering based on the instance timezone and the ODBC client is filtered based on the Windows timezone. The result is an intersection of the two timezones and potentially a loss of queried information.
+
+== Avoid Views That Reference Themselves ==
+
+When you use views, ensure that they do not reference themselves.  This can cause the queries to loop and create stack overflows.
+
+== Avoid Number Precision Errors ==
+
+When performing queries on SQL Server 2008 and 2012, you may encounter precision errors for decimal or number field values using the '''OPENQUERY''' syntax with the ODBC driver.  For more information, see [[Using_ODBC_Driver_in_SQL_Server_2008_and_2012#Number_Precision_Errors|Number Precision Errors]].
+
+== Avoid Select Top N Statements ==
+
+In versions of the ODBC driver prior to version 1.0.10, statements following the format '''SELECT TOP N''', such as <tt>select top 10 number from incident;</tt> may impact instance performance. Instead of using this type of statement, construct queries that include a ''where'' clause so the ODBC driver pulls data in smaller batches based on indexed fields. For example, use <tt>select number from incident where sys_updated_on = '<today's_date>';</tt>.
+
+== Use dateadd and datediff for Literal Values Only==
+
+Avoid using the ''dateadd'' and ''datediff'' statements when the result cannot be transformed to a literal value in the where clause. Failing to return a literal value causes the driver to query all records from the table before filtering them, which may affect query performance.
+
+Use the following example to determine when to use dateadd or datediff.
+
+{| class="standard"
+! Inefficient query
+! Efficient query
+|-
+|select number from incident where datediff(day, curdate(), closed_at)=-1;
+|select number from incident where closed_at=dateadd(day, -1, curdate());
+|}
+
+In the second example, the statement is transformed to <tt>select number from incident where closed_at= ‘2015-05-05’;</tt>, allowing the driver to query fewer records from the instance.
+
+== Use One Session for Multiple Queries ==
+
+When performing multiple queries, establish a connection to the instance before performing any queries and reuse this connection for all of the queries. For example, if you use a ''for'' loop to iterate through multiple queries, establish the connection outside of the for loop, then perform each query within the for loop using the established connection.
+
+== Cache the Database Schema Before Running Parallel Queries ==
+
+By default, the ODBC Driver does not support parallel queries. If you are using a reporting tool that performs queries in parallel, ensure the instance database schema is cached before running any queries. You can cache the database schema by navigating to <nowiki>https://<instance>.service-now.com/?SCHEMA</nowiki> in a browser.

@@ -1,0 +1,131 @@
+{{Technical Best Practices}} [[Category:Maintenance Best Practices]]
+
+= Overview =
+
+Debugging can provide information to help you understand system processes. There are a number of different debugging features you can use within a ServiceNow instance. Many browsers also feature a console log, which you can use for additional debugging.
+
+= Common Tester Questions =
+Before you start debugging, it is important to identify the source of the issue, and to be able to reproduce the defect or bug. Potential sources include user error, invalid test data, test script inaccuracy, and technical implementation. To help identify and remediate the issue, the tester should provide the following information: 
+*The record being worked on&mdash;for example, CHG0012513
+*The user ID used for the test&mdash;for example, Change Test User 3
+*The steps required to reproduce the issue
+*The expected result of the test
+*The actual result of the test
+
+= Server-Side Debugging =
+
+Before starting work on an implementation, consider using one or more of the system debugging modules in the System Diagnostics and System Security applications. Enter '''debug''' in the navigation filter to display all debugging modules.
+
+[[Image:KB-Debug-1.png|left|border|KB-Debug-1.png]]
+<br style="clear:both;" /> 
+
+Click a debugging module to activate it. When any debugging feature is active, an area labeled Debug Output appears at the bottom of the content frame. 
+
+== Commonly Used Debugging Modules ==
+
+Several commonly used debugging modules are described in the next few sections.
+
+=== Debug Log ===
+
+'''System Diagnostics > Debug Log''' displays [[GlideSystem#print|<tt>gs.print()</tt>]] and [[GlideSystem#log|<tt>gs.log()</tt>]] statements as well as server logging information and error messages at the bottom of the content frame. This helps you avoid alternating between the record you are trying to debug and the log output.
+
+{{Note|Debug Log is automatically activated when you activate Debug Business Rule.}}
+
+[[Image:Debug_Log.png|left|border|800px|Debug_Log.png]] <br style="clear:both;" />
+
+=== Debug Business Rule ===
+
+'''System Diagnostics > Debug Business Rule''' displays messages about business rules. These messages indicate which business rules are being run and when they are started (==>), finished (<==), or skipped (===). If a business rule is skipped, the failed condition is displayed.
+
+[[Image:KB-Debug-2.png|left|border|800px|KB-Debug-2.png]]
+<br style="clear:both;" /> 
+
+=== Debug Security Rules ===
+
+'''System Security > [[Using Access Control Rules#Debugging|Debug Security Rules]]''' places a debug icon on each field of a form. Point to the icon to see if there are any debug messages for the associated element. Click the icon to expand details about read and write access. This module is very helpful when you are using ACLs to control access to records and fields.
+
+[[Image:Debug-Security-Rules.png|left|border|800px|Debug-Security-Rules.png]]
+<br style="clear:both;" />
+The debug security rules has enhanced functionality, allowing you to view a context parameter. This feature is available starting with the [[Eureka Release Notes|Eureka release]].
+
+=== Stop Debugging ===
+
+'''System Security > Stop Debugging''' disables all debugging processes.
+
+== Server-Side Debugging Persistence ==
+
+When you activate a server-side debugging module, it remains active until one of the following occurs:
+
+*You activate the Stop Debugging module, located in System Security. 
+*You log out from the instance.
+*The session expires (for example, the session times out).
+*You close the browser. 
+
+{{Note|Debugging processes persist even if you impersonate someone else. This is very helpful when impersonating users with multiple roles or no roles. Often, the biggest challenge to troubleshooting a reported issue is recreating it. Having debugging active while impersonating another user allows you to continue debugging while recreating the conditions around the reported issue.}}
+
+== Log Messages Controlled by a Property ==
+
+The recommended way to debug server-side scripts is to use <tt>gs.print</tt> statements controlled by system properties. A common use case is a debug function in a script include that checks the value of a specific system property to determine if it should output the message indicated. For example:
+
+<source lang="javascript">var MyUtil = Class.create();
+ 
+MyUtil.prototype = {
+    initialize: function(){
+        this.debug       = gs.getProperty('debug.MyUtil') == 'true';
+        this.debugPrefix = '>>>DEBUG: MyUtil: ';
+    },
+ 
+    myMethod : function(id) {
+ 
+        // Some logic here
+        this._debug('myMethod(): Sample debug output');
+    },
+ 
+    _debug : function(msg) {
+
+        if (this.debug) {
+            gs.print(debugPrefix + msg);
+        }
+    },
+ 
+    type : "MyUtil"
+}
+</source>
+ 
+If the system property <tt>debug.MyUtil</tt> is set to '''false''', nothing will be output to the log. If it is set to '''true''', the debug message will be displayed. When combined with [[#Debug Log|Debug Log]] or [[#Debug Business Rule|Debug Business Rule]], this property can be used to enable or [[#Disabling Debugging|disable debug]] information without changing code and without impacting the user experiences of others on the system.
+
+If a tester or user reports that something is not behaving as expected in test, QA, production, or another instance, you can enable the property, enable debugging output, and investigate your results quickly.
+
+== Other Methods ==
+
+Some developers use the <tt>gs.addInfoMessage()</tt> or <tt>gs.addErrorMessage()</tt> JavaScript methods, but these may have an impact on the user experience. Consider the following situation: another developer is trying to debug a business rule running on the Task table while you are trying to do a code review or demo on the Incident table. Suddenly several messages appear at the top of the content frame, leaving you to wonder if they will appear in production when you are not even sure where they came from in development.
+
+Using [[GSLog|<tt>gs.log()</tt>]] statements in scripts may seem fairly anonymous to other users at first. They do not show up on the screen and you have to know where to look to see them. The drawback to using <tt>gs.log()</tt> statements to output debug messages is that they often get left in the code. If <tt>gs.log()</tt> statements are left in the code, they can have a considerable impact on the size of the system log file. Just one <tt>gs.log()</tt> file in the right spot can be triggered hundreds or thousands of times by users, system imports, scheduled jobs, and so on. Large log files full of debug messages adversely impact backup and restore times for information with little value in production. Controlling log messages with a [[#Using Logging Messages Controlled by Properties|system property]] prevents <tt>gs.log()</tt> statements from filling up the log.
+
+= Client-Side Debugging =
+
+To debug processes on the client side, click the debug icon in the banner frame.
+
+[[Image:KB-Debug-3.jpeg|left|border|KB-Debug-3.jpeg]]
+<br style="clear:both;" /> 
+
+Clicking the debug icon launches the [[JavaScript Debug Window|JavaScript Debug window]]. Along with useful system information, you may choose to include <tt>jslog()</tt> statements in client scripts and UI policy scripts to help isolate and resolve issues. Unlike server-side debug statements, <tt>jslog()</tt> statements in client-side scripts do not consume disk space. This means you can leave them enabled, even in production.
+
+{{Note|When using <tt>jslog()</tt> statements, append a prefix string to messages you want to differentiate in the JavaScript debug window. For example:
+
+<tt>>>>DEBUG (CT): Client script: windowLocator():</tt>
+
+You can then use the browser's find feature to locate specific messages or fragments.}}
+
+= Browser Debugging =
+
+If available, check the browser's console log for additional debugging information. For example, the Firefox and Chrome console logs often display error messages that do not appear anywhere else. Using these logs can help speed up the development and troubleshooting processes by locating undefined objects.
+
+[[Image:KB-Debug-4.png|left|border|KB-Debug-4.png]]
+<br style="clear:both;" />
+
+= Disabling Debugging =
+
+Before you close out an update set or complete testing of the production instance, be sure to disable all server-side debugging to save log space in production. To disable debugging, search for all system properties that contain the string '''debug''' in the name and ensure they are all set to '''false'''.
+
+This is another good reason to [[#Using Logging Messages Controlled by Properties|use properties to control debugging in a script]]. It makes enabling or disabling debugging a simple task, such as when you need to validate use cases or data.
