@@ -1,0 +1,124 @@
+[[Category:Planning Best Practices]] {{Technical Best Practices}}
+
+=Overview=
+
+Effective security is crucial to organizations using ServiceNow. Use the information on this page to configure security measures that are effective, easily maintained, and scalable.
+
+For more recommended security practices, see the [https://hi.service-now.com/kb_view.do?sysparm_article=KB0536146 Security Hardening Guide] on HI.
+
+= Use Access Control List Rules =
+
+In addition to other methods for securing data, ServiceNow utilizes [[Using Access Control Rules|access control list (ACL) rules]] to control what data users can access and how they can access it. Most ACL rules restrict or grant access by [[Creating Roles|user role]]. Users who pass the user role requirement of an ACL rule gain access to the protected object, such as a table, field, or database operation.
+
+== Assign Roles by Group ==
+
+User roles can be assigned to both groups and users. Every user in a group inherits the group's user roles. Similarly, some roles also contain other roles. For example, the admin role contains many other roles. Users with a parent user role inherit any child user roles contained by the parent.
+
+The preferred method of assigning roles to users is to add users to groups that have been assigned the desired roles. When you assign a user to a group, the user inherits that group's roles. When you remove a user from a group, the group roles are revoked for that user. This method makes managing roles much easier than assigning roles to individual users. 
+
+To add users to groups and apply roles to groups:
+
+#Navigate to '''User Administration > Groups'''.
+#Click the group to which you want to assign the users.
+#From the '''Group members''' related list, click '''Edit'''. 
+#Select the users and click '''Add'''.
+#Click '''Save'''.
+#From the '''Roles''' related list, click '''Edit'''.
+#Add the roles and click '''Save'''.
+
+For more information, see [[Creating Groups#Creating Groups|Creating Groups]].
+
+== General Access Guidelines ==
+
+Consider the following access control suggestions for ServiceNow task-oriented objects, such as records, tables, and UI pages.
+
+{{Note|This is a recommended starting point. Security needs may vary by organization.}}
+
+{| class="standard"
+!Access
+!Suggested Users
+!Example
+|-
+|Read
+|All users
+|Enable self-help by allowing users to search past incidents.
+|-
+|Write
+|Specific users or groups
+|
+*'''Task table and all its extended classes:''' users with application-specific roles, such as itil.
+*'''Specific task record:''' the caller on the incident record, the change requester, and the user or group to whom the incident was assigned. 
+*'''CI record:''' the group that owns the CI, CMDB manager, or users with CMDB-specific roles.
+|-
+|Delete
+|No one
+|As a general practice, no one should delete records. Deleting records can lead to broken references, such as an incident assigned to a deleted user. A recommended option is to use an '''Active''' field to indicate whether information on a record should be included in a list, report, or scripted query.
+|}
+
+{{Note|Use [[Using_Access_Control_Rules#Debugging|ACL debugging]] to help diagnose issues regarding security and access control rules.}}
+
+== Avoid GlideRecord Queries in ACL Rules ==
+
+Use caution when adding scripts to ACL rules. When you must use a script, avoid [[GlideRecord]] queries; they can adversely impact performance.
+
+== Leverage Inheritable Permissions ==
+
+The ServiceNow [[Contextual_Security|contextual security manager]] can leverage the hierarchical table structure, allowing extended tables to inherit permissions from parent tables. Take advantage of this flexible model whenever possible.
+
+For example, it is not necessary to create an ACL rule for the '''Priority''' field on the Incident table if the '''Priority''' field on the parent table, Task, already provides the necessary permissions.
+
+{{Note|An ACL rule grants a user access to an object only if the user meets '''all''' of the permissions required by the matching ACL rules. The combination of all fields inside a single ACL must evaluate to true for the user to obtain access. For example, an ACL rule can specify that a state is active, AND a script must evaluate to true, AND the user must have one of several roles. If you want to specify that state is active OR a script must evaluate to true, OR the user must have one of several roles, create three separate ACL rules. For more information, see [[Using Access Control Rules#Evaluating ACL Rule Permission Requirements|Evaluating ACL Rule Permission Requirements]].}}
+
+== Know When to Use Client-Side Security ==
+
+If field security needs to change as a form is being filled out, use UI policies and client scripts, which are evaluated and run on the client, that is, the browser. For example, when a support engineer changes the incident state to resolved or closed, one or more fields change from editable to read-only to prevent additional changes.
+
+{{Note|Client-side security with UI policies and client scripts is not as secure as server-side security. Most modern browsers allow users to change attributes of the data sent to the client, including read-only or hidden fields.}}
+
+If the data is not dynamically changing on the form, that is, the read-only or edit attribute does not change after the form is loaded, ACLs are recommended. ACLs are evaluated and enforced entirely on the server, making them much more secure than UI policies and client scripts.
+
+= Use Data Policy to Enforce Data Consistency =
+
+Data policies increase the security of UI policies by ensuring that data meets certain requirements regardless of whether the data comes from the UI form or another source, such as a web service, import set, or incoming mail. For example, use a data policy to ensure that incident records always have a short description and category even when the data comes from an integration. Data policies also prevent users from bypassing client-side policies.
+
+= Using an ACL Rule-Based Security Model =
+
+ServiceNow uses a "default deny" security model that prevents non-administrator users from accessing objects unless they meet a matching ACL rule. This removes many attack vectors, such as insecure scripts. Use caution when changing the security model to assure that proper settings are enabled to secure your instance.
+
+=Ensure that High Security Settings is Activated=
+
+Ensure that the [[High Security Settings|High Security Settings]] plugin is activated. The High Security Settings plugin delivers a variety of settings and features to increase the security of your ServiceNow platform. High Security Settings automatically activates the Contextual Security plugin if it is not already active. The High Security Settings plugin is active by default on all Aspen and later ServiceNow instances. 
+
+Check the property <tt>glide.sm.default_mode</tt> to ensure it is set to <tt>deny</tt>. This directs the wildcard ACL to restrict access unless access is granted by another ACL. If this property is set to <tt>allow</tt> then access is open and the High Security Settings plugin is not as effective as it is meant to be.
+
+{{Note|If you choose to activate the High Security Settings, exercise rigorous testing regarding access. The plugin may add restrictions to previously available records.}}
+
+= Ensure that Contextual Security is Activated =
+
+Ensure that [[Contextual Security|contextual security]] plugin is activated. The contextual security manager provides incredible flexibility and power to protect information by controlling read/write/create/delete authorization. Key advantages include: 
+
+*Contextual Security -- Secure a record based on its contents 
+*Hierarchical Security -- Can apply security rules to any level in our object hierarchy
+
+{{Note|The Contextual Security plugin is actived by default in new instances since 2008.}}
+
+= Limit the Number of Users with the Admin Role =
+
+Users with the admin role have special privileges that automatically bypass most ACL rules. While such privileges are useful during development, in production consider granting administrative users one or more [[Base System Roles#Special Administrative Roles|special administrative roles]] that are specific to the functions the user needs rather than granting the user the admin role. Limiting the number of users with the admin role is consistent with the [http://en.wikipedia.org/wiki/Principle_of_least_privilege principle of least privilege] and helps ensure separation of duties.
+
+== Domain Separated Global Admins ==
+Global Admins in ([[Domain_Separation|domain separated]]) Production should not be needed.   If you are in production and at the top level domain you should have all the visibility you need.  The only use case for a Global Admin would be for Development in a Development instance. If you are in production and at the top level domain you should have all the visibility you need.  In addition the Use of Before Query Business Rules to limit the view of the Global Admins from non-admin users causes additional business rule to be loaded for every reference on a form or list.
+
+= Create Multiple Accounts for Administrators =
+
+The admin role is required to manage many of the restricted features of ServiceNow, and there are responsibilities and risks associated with using an account with the admin role. It is possible to unintentionally modify objects using an admin account, leading to potential compliance and governance issues.
+
+As a best practice, create separate administrative and everyday accounts for each user who requires administrator access.
+
+{{Note|Use similar user IDs for a user's admin and non-admin accounts. For example: john.doe (everyday access) and john.doe.admin (administrative access).}}
+
+A user who requires administrative access can sign in with an account that has been granted the admin role. This role has access to all system features, functions, and data, regardless of security constraints. You can easily identify an account with administrator rights by the lock icon ([[Image:locked.png]]) next to the welcome message in the banner frame.
+
+It is considered a best practice to manage everyday operations in an account without the elevated administrator rights to the system. This maintains security and minimizes risk of accidental changes (particularly in production instances).
+
+{{Warning|Do not allow multiple users to share a single administrator account. Create a unique account for each user that requires administrator access. Unique accounts allow accountability and traceability within the system as objects are modified.}}

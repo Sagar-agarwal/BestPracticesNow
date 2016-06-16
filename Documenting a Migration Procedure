@@ -1,0 +1,49 @@
+{{Technical Best Practices}} [[Category:Planning Best Practices]]
+__TOC__
+
+=Overview=
+
+A well-defined migration process is essential for successfully moving changes from one instance to another. The heart of the migration process is a document that identifies necessary steps to migrate [[System Update Sets|update sets]], as well as data not captured by update sets. In some organizations, developers pass the responsibility of the update set migration process to different people or groups. It is also fairly common for more than one developer to maintain changes in multiple update sets, which increases the challenge of tracking details and getting the changes together in each instance. So a document detailing the migration procedure helps the team ensure that all changes operate as expected. 
+
+A good migration procedure should address the topics described here, as well as other topics appropriate to the situation.
+
+=Update Set Application Order=
+
+In the migration procedure, create an ordered list that details how grouped update sets should be applied. Many organizations group system changes in routine (weekly or monthly) updates rather than promoting each change immediately. As several update sets are completed, the order in which they are applied may become important to ensure dependencies are met. For example, if Update Set A creates a new table and Update Set B changes the list layout of that table, committing Update Set B first results in an error. It cannot apply the new list layout to the table because the table has not yet been created.
+
+Sample update set list:
+
+{| class="standard"
+|-
+! Order
+! Update Set Name
+! Description
+|-
+| 1
+| R1-CHG-S5-CWT 
+| Change process sprint 5 weekly update
+|-
+| 2
+| R1-CHG-S5-CWT-P1
+| Change process sprint 5 patch 1
+|-
+| 3 
+| R1-CHG-D03-CWT
+| Change defect bundle #3
+|-
+| 4 
+| R1-INC-S5-BAR
+| Incident process sprint 5 weekly update
+|}
+
+=Additional Data Migration=
+
+The migration procedure should include information about any additional data or configuration changes required to accompany the update sets. For example, some applications and processes, such as approval lookups, require data that is not captured in the update set.  Be sure the migration procedure:
+
+* Indicates where the additional data files are located. For example, state that they are attached to the update set in the development instance or provide a network drive path.
+* Provides instructions for using the export and import procedure to transfer the data using XML files
+
+You may find that certain items need to be updated before or after an update set is committed. The migration procedure should include instructions for:
+*Activating plugins
+*Configuring system properties or other instance-specific settings
+*Setting up MID Servers and identity servers

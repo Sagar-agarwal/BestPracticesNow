@@ -1,0 +1,539 @@
+{{Technical Best Practices}} [[Category:Development Best Practices|*]]
+
+__NOTOC__
+{{LimitedTOC|2}}
+
+= Overview =
+
+Building strong functionality in ServiceNow begins with writing high-quality code. Take steps to make your code manageable, efficient, and scalable from the early stages. This helps to ensure good performance, reduces the chances of problems, and simplifies the [[Debugging Tools Best Practices|debugging]] process later.
+
+Scoped applications are available starting with the [[Fuji Release Notes|Fuji release]]. Scripts created for scoped applications have new rules for referencing global scripts and scripts from other applications. The coding best practices still apply. The examples on this page may need to be changed to run in a scoped script. To start creating scoped applications, see [[Scripting in Scoped Applications]].
+
+= Make Code Easy to Read =
+
+When writing code, remember that others may work with it in the future. Whenever possible, ensure your code is easy to read and understand. Follow any formatting standards used by your organization.
+
+== Include Comments ==
+
+Always include comments in your code. What seems obvious to one developer may be unclear to others. Please review the guidelines for [[Commenting_Your_Work|commenting code]].
+
+== Use White Space ==
+
+Use empty lines and spaces to make code more readable. The easier it is to read code, the easier it is to identify and correct issues. Empty lines help to visually group blocks of code together so the reader can see the logical organization. Spaces on each line help make the items on an individual line easier to read. 
+
+The format code icon ([[Image:Format_code.gifx]]) in the ServiceNow [[Using_the_Syntax_Editor|syntax editor]] is a useful tool for adjusting indentation without altering other spacing.
+
+<source lang="javascript">
+// Example of poor white space usage
+function createRelationship(relType,childCI,parentCI){
+var newRel=new GlideRecord('cmdb_rel_ci');
+var newRelType=new GlideRecord('cmdb_rel_type');
+if(childCI==parentCI)
+return;
+var relTypeID;
+if(newRelType.get(relType)){
+relTypeID=newRelType.getValue('sys_id');
+newRel.initialize();
+newRel.setValue('type',relTypeID);
+newRel.setValue('child',childCI.getValue('sys_id'));
+newRel.setValue('parent',parentCI.getValue('sys_id'));
+newRel.insert();
+}
+}
+</source>
+
+The lack of indentation and spacing in the previous example makes it difficult to determine the flow of logic. By adding a few spaces, the code becomes more readable:
+
+<source lang="javascript">
+// Example of good white space usage
+function createRelationship(relType, childCI, parentCI) { // Put spaces between parameters and before curly brace
+
+    var newRel     = new GlideRecord('cmdb_rel_ci');   // Put spaces around '='.
+    var newrelType = new GlideRecord('cmdb_rel_type'); // Optionally, put additional spaces to align '=' w/previous line.
+    var relTypeID;                                  // Group variables together where appropriate
+
+    if (childCI == parentCI)  // Put a space after 'if' and around operators ('!=')
+        return;
+
+    if (newRelType.get(relType)) { // Use extra blank lines to help break up chunks of code and improve readability
+
+        relTypeID = newRelType.getValue('sys_id');
+
+        newRel.initialize();                     // Group similar statements together
+        newRel.setValue('type', relTypeID);
+        newRel.setValue('child', childCI.getValue('sys_id'));
+        newRel.setValue('parent', parentCI.getValue('sys_id'));
+        newRel.insert();
+    }
+}</source>
+
+{{Note|Your organization may use a specific style guide for white space usage. Follow standards that best suit the needs of your organization.}}
+
+== Use Descriptive Variable and Function Names ==
+
+Meaningful names for functions and variables better indicate to readers the purpose of code. Consider this code excerpt:
+
+<source lang="javascript">
+// Poor function and variable names
+function del(r, d, s) {
+
+    var a=0;
+
+    if (s == 13) // 13=cancel/delete
+        r.deleteRecord();
+    else
+        a = d;
+
+    return a;
+}
+</source>
+
+It is difficult to determine the purpose of <tt>function del(r, d, s)</tt>. A better way to write this is:
+
+<source lang="javascript">
+// Good function and variable names
+function deleteIfCanceled(glideRec, defaultAnswer, stateValue) {
+
+    var answer = 0;
+
+    if (stateValue == 13)
+        glideRec.deleteRecord();
+    else
+        answer = defaultAnswer;
+
+    return answer;
+}
+</source>
+
+Though it is helpful to be descriptive, there are cases where shorter variable names are acceptable. In some programming languages, it is common practice to use the variable <tt>i</tt> for counting in a looping statement (such as <tt>for-loop</tt>). The following code is perfectly acceptable:
+
+<source lang="javascript">
+for (var i = 0; i < myArray.length; i++)  {
+     // Do some important processing on each record here
+}
+</source>
+
+== Write Simple Statements == 
+
+Remember that less experienced developers may work with your code in the future. Make it as easy to maintain as possible. In general, it is the compiler's job to make code fast, so minimize the use of fancy tricks. For example, experienced programmers may not have an issue with the following statement:
+
+<source lang="javascript">
+var result = (x == y) ? a : b;
+</source>
+
+Less experienced developers may find it challenging to understand. Instead, the statement could be written more clearly as:
+
+<source lang="javascript">
+var result;
+
+if (x == y)
+    result = a;
+else
+    result = b;
+
+</source>
+
+= Create Small Modular Components =
+
+Break down your code into modular components or specialized functions. [[Script Includes|Script include]] functions are excellent examples of this technique. Script includes are essentially libraries of functionality that can be implemented in other server-side scripts, such as [[Business Rules|business rules]], [[UI Actions|UI actions]], and [[Script Actions|script actions]]. Some of the benefits of specialized functions include:
+ 
+* They are easy to create, since they are small and simple with limited functionality.
+* They are generally simpler and shorter, so it is easy to understand the logic, inputs, and outputs. This makes it easier for the next person who works with the code to make modifications. 
+* They are easier to test. As a related note, when you test the code, be sure to test both valid and invalid inputs to ensure the script is as robust as possible. 
+
+As you create small specialized functions, keep in mind how the small bits fit together in a larger construct. For example, you may find that doing a query of the same data inside 10 separate functions is not database-friendly, and that a different approach is necessary. 
+
+== Construct Reusable Functions ==
+
+If you see the same or similar logic repeated in a process, consider creating a specialized function. This improves the quality of code, saves you the trouble of searching through multiple blocks of similar code when a problem arises, and makes code easier to maintain. 
+
+For example, assume a script adds a user to one [[Configuring Watch Lists|watch list]], adds another user to a different watch list, and then adds a configuration item (CI) to a user-defined [[Referencing a Glide List from a Script|glide_list]] field. The only things that are different between the code for each command are the field name and the element being inserted; the logic is the same. The script could be constructed as a single function, <tt>addGlideListElement(listName, elementID)</tt>, and called repeatedly, as in this script include:
+
+<source lang="javascript">
+var AcmeIncidentFunctions = Class.create();
+AcmeIncidentFunctions.prototype = {
+    initialize: function() {
+    },
+
+    /*
+     * addGlideListElement - add a sys_id to a specified glide list field
+     *
+     * @param grField - field element to add a value (e.g. current.watch_list)
+     * @param id - sys_id to add (if it doesn't already exist)
+     * @return - new list values
+     *
+     */
+    addGlideListElement : function(grField, id) {
+
+        // Get the list of values
+        if (JSUtil.notNil(grField))
+            var idList = grField.split(',');
+        else
+            var idList = [];
+
+        // Determine if the id passed is already in the list
+        var found = false;
+        for (var i = 0; i < idList.length; i++) {
+            if (id == idList[i]) {
+                found = true;
+                break;
+            }
+        }
+
+        // If it was not in the list, then add it
+        if (!found)
+            idList.push(id);
+
+        // Return the comma separated list of ids
+        return idList.join(',');
+    },
+	
+    type: 'AcmeIncidentFunctions'
+}
+</source>
+
+That script include could be used in a business rule, workflow script activity, or other server-side script similar to this:
+
+<source lang="javascript">
+var aif = new AcmeIncidentFunctions();
+current.watch_list = aif.addGlideListElement(current.watch_list, gs.getUserID());
+</source>
+
+=== Return Values ===
+
+Get in the practice of returning some type of value when you create new functions. The value returned can tell the calling code useful information about how the function executed. Examples of return values include:
+
+*The number of records read from a table (return '''0''' to indicate an error).
+*The success status of a particular operation (return '''true''' to indicate success).
+*A JavaScript object (return '''NULL''' to indicate a failure).
+
+Examples of values returned are shown here.
+
+<source lang="javascript">
+if (!saveRecord(current))
+    gs.addErrorMessage('Save Error');
+
+/*
+ * saveRecord – save a record
+ *
+ * @param rec – GlideRecord
+ * @return – boolean (true=successful save)
+ *
+ */
+function saveRecord(rec) {
+
+    var id = rec.update();
+
+    if (!id.nil())
+        return true;
+
+    return false;
+}
+</source>
+
+== Use Variables to Store Function Results ==
+
+Avoid situations where the same function is repeatedly called with the same result. This is common when you call functions with no parameters. Depending on the function, repeated calls may negatively affect performance. 
+
+When possible, use a descriptive variable to store a value and refer to the variable instead of calling the same function repeatedly. Using variables can also make the code easier to understand. Consider this code sample:
+
+<source lang="javascript">
+if (gs.getUserID() == current.assigned_to ||
+    gs.getUserID() == current.u_coordinator ||
+    gs.getUserID() == current.caller_id ||
+    gs.getUserID() == current.caller_id.manager) {
+    // Do something important here
+}
+</source>
+
+This code can be written more efficiently as follows:
+
+<source lang="javascript">
+var currentUser = gs.getUserID();
+var isOwner = (currentUser == current.assigned_to);
+var isCoordinator = (currentUser == current.u_coordinator);
+var isCaller = (currentUser == current.caller_id);
+var isManager = (currentUser == current.caller_id.manager);
+
+if (isOwner || isCoordinator || isCaller || isManager) {
+   // Do some important processing here
+}
+</source>
+
+== Use Self-Executing Functions ==
+
+A self-executing function is both declared and invoked within the same script field. Whenever writing a script that only needs to run in a single context, such as a [[Transform Map Scripts|transform map script]], use this type of function. For functions that must run in multiple contexts, consider [[#Construct Reusable Functions|reusable functions]] instead.
+
+By enclosing your script in a self-executing function you can ensure that the script does not impact other areas of the product, such as by overwriting global variables.
+
+A self-executing function follows this format:
+
+<source lang="javascript">
+(function functionName() {
+
+  //The script you want to run
+
+})(); //Note the parenthesis indicating this function should run.
+</source>
+
+You can declare functions within the self-executing function. These inner functions are accessible only from within the self-executing function.
+
+<source lang="javascript">
+(function functionName() {
+
+  function helperFunction(){
+    //return some value
+  }
+
+  var value = helperFunction(); //Valid function call.
+
+  //perform any other script actions
+
+})();
+
+var value2 = helperFunction(); //Invalid. This function is not accessible from outside the self-executing function.
+
+</source>
+
+= Avoid Complex GlideRecord Queries =
+
+Rather than creating a series of [[GlideRecord#addQuery|<tt>addQuery()</tt>]] and [[GlideRecord#addOrCondition|<tt>addOrCondition()</tt>]] calls to obtain a result, use [[GlideRecord#addEncodedQuery|<tt>addEncodedQuery()</tt>]] to make the query easier to create and maintain. 
+
+Consider a requirement to obtain a list of all active Apple printers and computers in a company's Santa Ana office. Creating the proper combination of <tt>addQuery()</tt> and <tt>addOrCondition()</tt> queries to get the proper solution may sound simple. However, if the requirement changes and you are asked to add another office location and a different hardware manufacturer to the list, the task of maintaining the query can become challenging. 
+
+For complex GlideRecord queries, it is easier to create a query string by generating encoded query strings [[Reference Qualifiers#Generating_Encoded_Query_Strings_through_a_Filter|through a filter]] and using that string with <tt>addEncodedQuery</tt>. As requirements change, you can create a new query string using the list filter, verify the results with the requirement author, and use the query in the same script.
+
+= Avoid Coding Pitfalls =
+
+== Experiment in a Sandbox ==
+
+Trying out new coding ideas or concepts in a development instance can lead to messy results later on. If you make changes, then alter your approach while using an [[Using_Update_Sets|update set]], you may find unwanted changes getting in the update set and being promoted to other instances. If you do not use an update set for your proof of concept, your development instance may behave differently than your other instances, making it difficult to verify defects and fixes. 
+
+If you do not have a sandbox environment available, use a ServiceNow demo instance. When you understand how to implement the new concept in a sandbox, build the solution in development.
+
+== Code in Stages ==
+
+Do not attempt to write hundreds of lines of code in one sitting. This is especially true if you are learning a new technology. Write a few lines of code at a time and test as you go to ensure it works as expected.
+
+Although this process may seem slow and tedious at first, it is ultimately more effective. If you try to write too much code at one time, it becomes difficult to locate the source of a problem. Instead of tracking back through lines and lines of code to find the defect, save time and effort by incrementally writing functional code.
+
+== Do Not Use Hard-Coded Values == 
+
+Avoid using hard-coded values in scripts, as they can lead to unpredictable results and can be difficult to track down later. Hard coding [[Unique Record Identifier|sys_ids]] is not recommended, as they may not be the same between instances. Instead, try looking up a value by reference or by [[Adding_a_Property|creating a property]] and retrieving the value with [[GlideSystem#getProperty.28String.2C_Object.29|<tt>gs.getProperty()</tt>]].
+
+Hard-coding group, user, or other names often leads to problems when an organizational change occurs. For example, assume you assign a value of '''Service Desk''' to the script variable for a group name:
+
+<source lang="javascript">
+var taskID = '26c811f06075388068d07268c841dcd0';
+var groupName = 'Service Desk' ;
+</source>
+
+The script will not function as expected when the group name changes from '''Service Desk''' to '''Help Desk'''. Instead, use a property:
+
+<source lang="javascript">
+var taskID = gs.getProperty('acme.default.task');
+var groupName = gs.getProperty('acme.group.name');
+</source>
+
+Also consider the following example in which a workflow needs an approval from the IT director of Acme Corp. Sara, the former IT director, has been replaced by Dale. See why the initial approach of hard-coding Sara's user information is not preferable.
+
+'''Initial Approach:'''
+
+#Create a user approval activity for Sara.
+#When Dale becomes the new IT director, update the workflow.
+
+'''Better Approach:'''
+
+This method eliminates the need to add hard-coded data in the workflow.  
+
+#Create a group, IT Director, and make Sara a member.
+#Use the Group Approval Activity.
+#When Dale becomes the new IT director, simply update the group membership instead of the workflow.
+
+== Avoid Dot-Walking to the sys_id of a Reference Field ==
+
+It is not necessary to include the sys_id of a reference field when dot-walking, as in the following example:
+<source lang="javascript">
+var id = current.caller_id.sys_id; // Wrong
+</source>
+
+The value of a reference field '''is''' a sys_id. When you dot-walk to the sys_id, the system does an additional database query to retrieve the caller_id record, then retrieves the sys_id. This can lead to performance issues. Instead, use the statement.
+
+<source lang="javascript">
+var id = current.getValue('caller_id'); // Right
+</source>
+
+== Use getDisplayValue() Effectively ==
+
+When scripting, become familiar with the tables and fields you are using. Instead of using ''name'', ''number'', or other explicit field name used for the display value, use the method [[GlideRecord#getDisplayValue|getDisplayValue()]]. Consider the following example:
+<source lang="javascript">
+var parent = current.parent.number;
+var myCI = current.cmdb_ci.name;
+</source>
+You would be required to update this code if the display value requirement changes on either of these two tables. For example, the business now wants to display the CI's serial number field instead of name. When someone changes the dictionary attribute on the Configuration Item [cmdb_ci] table, from name to serial_number, this code no longer reflects the current requirements.
+
+Instead, consider using the following code:
+<source lang="javascript">
+var parent = current.parent.getDisplayValue();
+var myCI = current.cmdb_ci.getDisplayValue();
+</source>
+To determine which field on a table is used as the display value, [[System_Dictionary|inspect the dictionary]] entry for the table and note which field has a ''Display'' field value of true.
+
+== Verify Values Exist Before Using Them ==
+
+To avoid unpredictable results and warning messages, verify that variables and fields have a value before using them. Consider the following code:
+
+<source lang="javascript">
+var table = current.cmdb_ci.installed_on.sys_class_name;
+gs.print('Table is: ' + table);
+</source>
+
+Any additional statements that use the variable <tt>table</tt> may throw warning messages in the [[Viewing System Logs|system log]] if the value is undefined. This can happen if the '''cmdb_ci''' field is empty or if the '''installed_on''' field in the CI is empty. The following code demonstrates a better way to verify that the <tt>table</tt> variable has a value before using it:
+
+<source lang="javascript">
+var table = current.cmdb_ci.installed_on.sys_class_name;
+
+if (table)
+    gs.print('Table is: ' + table);
+else
+    gs.print('Warning: table is undefined');
+
+</source>
+
+== Avoid Complex Queries on Large Data Sets == 
+
+Limit the number of times you search large tables. As your instance grows, these searches can affect performance. Assume you have a requirement to search the CMDB for the importance of all upstream services related to a specific server when that server is added to the Incident form. Running a query on the Relationship [cmdb_rel_ci] table is not a problem for a simple CMDB with a few hundred or thousand CIs. However, for a CMDB with three million CIs and hundreds of thousands of relationships, the query could take hours. 
+
+One solution is to [[Creating Defined Related Lists|create a related list]] for the CI that lists affected services. The list can be updated by a business rule as relationships for the CI are updated. When a CI is added to an incident, the affected services list can be quickly retrieved from the related list on the CI, rather than launching a long search on the Relationship table.
+
+== Let the Database Do the Work ==
+
+Whenever possible, leverage the power of the database to retrieve the proper records. For example, if you are checking 1,000,000 incidents to see if at least one record is active, your first solution may look like this:
+
+<source lang="javascript">
+var inc = new GlideRecord('incident');
+
+inc.addQuery('active', true);
+inc.query();
+
+if (inc.hasNext())
+   // There is at least one active record
+</source>
+
+However, if there are 250,000 active records, the <tt>query()</tt> method has to retrieve all those records. That can take time. Instead, use the <tt>setLimit()</tt> method to instruct the database to return only one record. Returning one record is much faster than returning all the records.
+
+<source lang="javascript">
+var inc = new GlideRecord('incident');
+
+inc.addQuery('active', true);
+inc.setLimit(1);  // Tell the database to only retrieve a maximum of 1 record
+inc.query();
+
+if (inc.hasNext())
+   // There is at least one active record
+
+</source>
+
+== Avoid Dynamic JEXL Expressions in an Evaluate ==
+
+When writing Jelly code, avoid using dynamic JEXL expressions inside the Jelly tag [[Extensions to Jelly Syntax#<g:evaluate>|<tt><g:evaluate></tt>]] (or <tt><g2:evaluate></tt> for [[Extensions to Jelly Syntax#Phases|phase two]]). While the code appears to work, it affects a memory resource (called PermGen) in the Java Virtual Machine, which can lead to performance issues and even system outages over time. The exception to using JEXL expressions inside <tt><g:evaluate></tt> tags is with static values, including: <tt>${AMP}</tt>, <tt>${AND}</tt>, <tt>${GT}</tt>, <tt>${LT}</tt>, and <tt>${SP}</tt> (and their phase two counterparts: <tt>$[AMP]</tt>, <tt>$[AND]</tt>, and so on).
+
+A better way to use Jelly variables inside <tt><g:evaluate></tt> tags is to include the attribute <tt>jelly="true"</tt>, then reference a copy of the variable with the <tt>jelly.</tt> prefix. 
+
+'''Incorrect''':
+
+<source lang="javascript">
+<j:set var="jvar_userid" value="46d44a23a9fe19810012d100cca80666" />
+<g:evaluate>
+    var inc = new GlideRecord('incident');
+
+    inc.addQuery('assigned_to', '${jvar_userid}');
+    inc.addQuery('priority', ${sysparm_priority});
+    inc.query();
+</g:evaluate>
+</source>
+
+'''Correct''':
+
+<source lang="javascript">
+<j:set var="jvar_userid" value="46d44a23a9fe19810012d100cca80666" />
+<g:evaluate jelly="true">
+    var inc = new GlideRecord('incident');
+
+    inc.addQuery('assigned_to', jelly.jvar_userid);
+    inc.addQuery('priority', jelly.sysparm_priority);
+    inc.query();
+</g:evaluate>
+</source>
+
+{{Note|Using <tt>jelly<nowiki>=</nowiki>"true"</tt> passes a copy of the Jelly variables to JavaScript. Changing the values of variables starting with <tt>jelly.</tt> inside the <tt><g:evaluate></tt> tag does not affect the value of the corresponding Jelly variable outside the <tt><g:evaluate></tt> tag. In the example above, <tt>${jvar_userid}</tt> requires quotes because the phase 1 processor replaces the text exactly, whereas <tt>jelly.jvar_userid</tt> does not require quotes. Similarly, <tt>${sysparm_priority}</tt> does not require quotes because it is an integer value.}}
+
+== Avoid eval Function ==
+
+The ''eval()'' function evaluates or executes an argument. Improper use of ''eval()'' opens up your code for injection attacks and debugging can be more challenging, as no line numbers are displayed with an error, for example.
+
+Consider the following code to achieve the same outcome:
+
+<source lang="javascript">
+GlideEvaluator.evaluateString("gs.log('Hello World');");
+</source>
+
+{{Note|The ''GlideEvaluator'' scriptable object described above is valid only for instances running [[Calgary Release Notes|Calgary release]] and subsequent versions.}}
+
+== Use GlideAggregate for Simple Record Counting ==
+
+If you need to count rows, you have two options: the <tt>getRowCount()</tt> method from GlideRecord, or GlideAggregate. Using GlideRecord to count rows can cause scalability issues as tables grow over time, because it retrieves every record with the query and then counts them. GlideAggregate gets its result from built-in database functionality, which is much quicker and doesn’t suffer from the scalability issues that GlideRecord does.
+
+Bad example:
+
+<source lang="javascript">
+/*
+ * countInactiveIncidents - return the number of closed incidents
+ *
+ * @param - none
+ * @returns integer - number of records found
+ *
+ */
+function countInactiveIncidents() {
+
+     var inc = new GlideRecord(‘incident’);
+
+     inc.addInactiveQuery();
+     inc.query();
+
+     var count = inc.getRowCount();
+     gs.print(count + ‘ inactive incidents found’);
+
+     return count;
+}
+</source>
+
+Good example:
+
+<source lang="javascript">
+/*
+ * countInactiveIncidents - return the number of closed incidents
+ *
+ * @param - none
+ * @returns integer - number of records found
+ *
+ */
+function countInactiveIncidents() {
+
+     var inc = new GlideAggregate(‘incident’);
+
+     inc.addAggregate(‘COUNT’)
+     inc.addInactiveQuery();
+     inc.query();
+
+     var count = 0;
+     if (inc.next())
+          count = inc.getAggregate(‘COUNT’);
+
+     gs.print(count + ‘ inactive incidents found’);
+
+     return count;
+}
+</source>
+
+{{Note|If you plan to process the records (for example, getting or setting values) as part of your functionality, it makes more sense to use the <tt>GlideRecord’s getRowCount()</tt> method because the records must be retrieved to do the processing regardless. Using GlideAggregate to get a row count, processing records with a <tt>while</tt> loop of GlideRecord operations would have no benefit. }}

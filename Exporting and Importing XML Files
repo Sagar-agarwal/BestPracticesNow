@@ -1,0 +1,53 @@
+{{Technical Best Practices}} [[Category:Development Best Practices]]
+
+= Overview =
+
+To occasionally migrate data from one instance to another, you can [[Exporting Data|export]] the XML data from one instance and import it to another. This method ensures that all fields and values are transferred exactly. Migrating data in an XML file saves time for unscheduled data imports since there is no need to build an [[Importing Data Using Import Sets|import set]] or a [[Creating New Transform Maps|transform map]]. 
+
+Exporting and importing data in XML files is commonly used for records created in a development instance that must be migrated with the update sets as part of a [[Documenting a Migration Procedure|migration procedure]]. Examples of these records include [[Data Lookup and Record Matching Support#Creating Custom Data Lookups|lookup tables]], unit test records, and other information required to support production. Typically, this information is only migrated once and the overhead of an import set is not justified.
+
+= Export Records as XML Data = 
+
+== Exporting a Single Record ==
+
+It is often useful to export a single record, such as an incident, a user, a [[Introduction to Assets and Configuration#CMDB|configuration item (CI)]], or a [[Creating a Scheduled Job|scheduled job]], from one instance to another. For example, if a user has issues in a production instance and you want to do in-depth diagnostics on the development instance without impacting the user, you can export the user, CI, or incident record as XML data for later import into the development instance.
+
+To export a single record as XML data:
+
+#Sign in to the instance that contains the source data.
+#Navigate to the record you want to export.
+#Right-click the form header and select '''Export > XML (This record)'''.
+#:Depending on browser and settings, a dialog box may prompt you to save the file, or the browser may automatically save the XML file to the downloads folder specified in the browser preferences.
+
+== Exporting Multiple Records ==
+
+Suppose you created a table to look up [[Approvals|approvers]] to support the problem management process. The table, fields, security, forms, and many other configuration parameters are captured by an update set; however, the data records are not. To promote the lookup records from the development instance to other instances, you must manually export all the records. 
+
+To export multiple records as XML data:
+
+#Sign in to the instance that contains the source data.
+#Navigate to the list you want to export.
+#[Optional] Filter the list, if desired.
+#Right-click the list header and select '''Export > XML'''. 
+#:[[Image:Export-complete.png]]
+#In the export progress dialog box, click '''Download''' when the export completes.
+#:Depending on browser and settings, a dialog box may prompt you to save the file, or the browser may automatically save the XML file to the downloads folder specified in the browser preferences.
+
+= Import Records as XML Data =
+
+After you have successfully exported data from the source instance, you can import the XML file directly to the target instance. Importing XML does not trigger business rules or update the instance cache.
+
+To import an XML file containing one or more records:
+
+#Sign in to the instance that should receive the data.
+#In the banner frame, click the [[High Security Settings#Elevated Privilege|elevate privileges]] icon ([[Image:Icon-elevated.png]]) beside the user name.
+#In the Activate an Elevated Privilege dialog box, select the '''security_admin''' check box and click '''OK'''.
+#:[[Image:elev_select.png]]
+#Navigate to any list in the system.
+#:Any list can be used because the XML file contains the destination table name for the records. 
+#Right-click the list header and select '''Import XML'''.
+#In the import screen, click '''Choose File''' and select the previously exported XML file.
+#:[[Image:Import-form.png|border|Import-form.png]]
+#Click '''Upload'''.
+
+{{Note|If the data does not import, navigate to '''System Definition > Tables & Columns''' and verify that the table from which the data was exported also exists in the instance importing the data.  If the table does not exist in that instance, you can move it using an [[Using Update Sets|update set]].}}

@@ -1,0 +1,199 @@
+{{Technical Best Practices}}
+[[Category:Development Best Practices]]
+
+=Overview=
+A [[Business Rules|business rule]] is a piece of JavaScript that runs when records are displayed, inserted, updated, or deleted, or when a table is queried. Follow these guidelines to ensure that business rules work efficiently and to prevent unpredictable results and performance issues.
+
+The Business Rules form was modified in the [[Eureka Release Notes|Eureka release]] to allow administrators to accomplish tasks like setting field values without needing to write a script. The form also provides a simplified default view and an advanced view.
+
+=Video Tutorials=
+The first video, ''When to Run Business Rules'', steps through the business rules workflow and provides guidelines and examples for determining when to run business rules within that workflow.
+''More Tips for Optimal Performance'' provides guidelines to ensure that business rules work efficiently, and to avoid unpredictable results and performance issues related to business rules.
+
+{| border="1" cellspacing="0" cellpadding="5" align="center"
+! When to Run Business Rules
+! More Tips for Optimal Performance
+|- 
+| {{#ev:youtube|X_sxELzpOjw |400}}
+| {{#ev:youtube|BB-gdqlvMBg |400}}
+|}
+
+= Know When to Run Business Rules =
+
+The '''When''' field on the [[Business Rules#Creating a Business Rule|Business Rule form]] indicates whether the business rule script runs before or after the <tt>current</tt> object is saved to the database. The most commonly used business rules are ''before'' and ''after'' rules.  
+
+You can use an ''async'' business rule in place of an ''after'' business rule. ''Async'' business rules are similar to ''after'' rules in that they run after the database commits a change. Unlike ''after'' rules, ''async'' rules run in the background simultaneously with other processes. ''Async'' business rules allow the system to return control to the user sooner but may take longer to update related objects.
+
+Follow these guidelines to determine which value to choose for the '''When''' field.
+
+{| class="standard"
+|-
+! Value
+! Use Case
+|-
+| display 
+| Use to provide client scripts access to server-side objects. For more information, see [[Scripting_in_Business_Rules#Scripting_with_Display_Business_Rules|Scripting with Display Business Rules]].
+|-
+| before 
+| Use to update information on the current object. For example, a business rule containing <tt>current.state=3;</tt> would set the '''State''' field on the current record to the state with a '''Value''' of '''3'''.
+|-
+| after 
+| Use to update information on related objects that need to be displayed immediately, such as GlideRecord queries.
+|-
+| async 
+| Use to update information on related objects that do not need to be displayed immediately, such as calculating metrics and SLAs.
+|}
+
+= Prevent Recursive Business Rules =
+
+Avoid using <tt>current.update()</tt> in a business rule script. The <tt>update()</tt> method triggers business rules to run on the same table for insert and update operations, leading to a business rule calling itself over and over. Changes made in ''before'' business rules are automatically saved when all ''before'' business rules are complete, and ''after'' business rules are best used for updating related, not current, objects. When a recursive business rule is detected, the system stops it and logs the error in the system log. However, <tt>current.update()</tt> causes system performance issues and is never necessary.
+
+You can prevent recursive business rules by using the <tt>[[GlideRecord#setWorkflow|setWorkflow()]]</tt> method with the false parameter. The combination of the <tt>update()</tt> and <tt>setWorkflow()</tt> methods is only recommended in special circumstances where the normal before and after guidelines mentioned above do not meet your requirements.
+
+= Enclose Code in Functions =
+
+Enclose the code in a business rule script inside a function, then call the function to limit the visibility, or ''scope'', of objects. When code is not enclosed in a function, variables and other objects are available to all other server-side scripts. This availability can lead to unexpected consequences that are difficult to troubleshoot. Consider this example:
+
+<source lang="javascript">
+var gr = new GlideRecord('incident');
+
+gr.addQuery('active', true);
+gr.query();
+
+while (gr.next()) {
+   // do some processing here
+}
+</source>
+
+Because the <tt>gr</tt> object is not enclosed in a function, all server-side scripts, including script includes and other business rules, have access to it. Other scripts may also use the common GlideRecord variable name <tt>gr</tt>. The duplicate names can conflict and lead to unexpected results. These issues are very difficult to isolate and resolve because typical debugging methods identify the business rule giving erroneous results rather than the business rule containing global variables. To avoid this issue, create a function with the same code snippet and call the function in the business rule script:
+
+<source lang="javascript">
+processActiveIncidents();
+
+function processActiveIncidents() {
+
+    var gr = new GlideRecord('incident');
+
+    gr.addQuery('active', true);
+    gr.query();
+
+    while (gr.next()) {
+        // do some processing here
+    }
+}
+</source>
+
+This solution is much safer because the scope of the variable <tt>gr</tt> is limited to the <tt>processActiveIncidents()</tt> function. Therefore, the <tt>gr</tt> variable does not conflict with <tt>gr</tt> variables in other server-side scripts.
+
+In this example, although the <tt>gr</tt> variable is local to the <tt>processActiveIncidents()</tt> function, the <tt>processActiveIncidents()</tt> function is considered global. Use meaningful function names, for example, <tt>processActiveIncidents()</tt> instead of <tt>doStuff()</tt> to make the purpose of the function clear to other users.
+
+= Use Script Includes Instead of Global Business Rules =
+
+A global business rule is any business rule where the selected '''Table''' is '''Global'''. Any other script can call global business rules. Global business rules have no condition or table restrictions and load on every page in the system. Most functions defined in global business rules are fairly specific, such as an advanced [[Reference_Qualifiers|reference qualifier]] on one field of one form. There is no benefit to loading this kind of script on every page.
+
+[[Script Includes|Script includes]] only load when called. If you have already written a global business rule, move the function definition to a script include. The name of the script include must match the name of the function for the script include to work properly. There is no need to modify any calls to the named function.
+
+{{Note|Converting base system global business rules to script includes is not recommended, unless you are aware if base system business rules change from release to release. If ServiceNow updates these business rules in the future, upgrades will skip any that have been customized. Check the versioning information in the installed components pages for the applications and features you are using.}}
+
+Consider this global business rule: 
+
+[[Image:Global-Business-Rule-u_ciRefQual.png|border|461px|Global-Business-Rule-u_ciRefQual.png]]
+
+This script include is a better alternative:
+
+[[Image:Script-Include-u_ciRefQual.png|border|678px|Script-Include-u_ciRefQual.png]]
+
+To call the function, use a script like this:
+
+<source lang="javascript">
+var ref = u_ciRefQual(current.location);
+</source>
+
+{{Note| To call a script include function from a [[Using Filters and Breadcrumbs#Scripted Filters|list filter]] or report, select the '''Client callable''' check box on the [[Script Includes#Script Include Form|Script Include form]].}}
+
+== Global Business Rules with Multiple Functions ==
+If your global business rule contains multiple functions such as the following example, you have two options to convert it to one or more script includes:
+
+<source lang="javascript">
+function activeOnly() {
+   return "active=true";
+}
+
+function inActiveOnly() {
+  return "active=false";
+}
+
+function openState() {
+  return "state=1";
+}
+</source>
+
+===Multi-function Global Business Rule Option 1===
+
+Put each function in it's own script include. This is easier in the short term by quickly converting a global business rule to a script include, however it may be more difficult to maintain since these could be related functions and be in separate records.
+
+===Multi-function Global Business Rule Option 2===
+
+Put all functions in a script include that defines a class (with no prototype) as in the example below.
+<source lang="javascript">
+var MyUtil = Class.create();
+
+MyUtil.activeOnly = function() {
+   return "active=true";
+}
+
+MyUtil.inActiveOnly = function() {
+  return "active=false";
+}
+
+MyUtil.openState = function() {
+  return "state=1";
+}
+</source>
+
+This method keeps the related functions together for easier management, however requires you identify each field or script that calls the functions and update it. For example, a reference qualifier field which previously said <tt>javascript:activeOnly()</tt> would become <tt>javascript:MyUtil.activeOnly()</tt>.
+
+= Write Small, Specific Business Rules =
+
+Small, specific business rules are easier to debug and maintain than large, complex ones. Rather than creating one business rule that checks and acts upon numerous conditions, create separate business rules for each condition. These individual business rules make it much easier to maintain each conditional statement and the corresponding logic.
+
+For example, if you've written a single business rule that triggers an event when the priority is 1 and calculates the fields for a report when the state changes to closed, consider these as two different results to two different conditions and create two separate business rules. One that triggers an event when the priority is 1 and one that calculates the fields for a report when the state changes to closed.
+
+= Use Conditions =
+
+The '''Condition''' field on the Business Rule form allows you to create a JavaScript statement for a condition under which the business rule should execute. If you add a condition statement to this field, ServiceNow evaluates the condition separately and parses the script only if the condition is true, thus improving performance. It is easier to [[Debugging Tools Best Practices#Debug Business Rule|debug business rules]] when you can see which one meet a particular condition and which do not.
+
+[[Image:BR-No-Condition.jpg|border|BR-No-Condition.jpg]]
+
+While the business rule shown here runs fine, the system loads and evaluates it after every insert or update, regardless of incident priority or other conditions. There is a single <tt>if</tt> statement, <tt>current.getValue('priority') == '1'</tt>, that determines whether or not the rest of the script should run. Place this statement in the '''Condition''' field, as shown below, to prevent ServiceNow from parsing the script if the condition is not met.
+
+[[Image:BR-Condition.jpg|border|BR-Condition.jpg|750px]]
+
+= Use Business Rules to Double-Check Critical Input =
+
+If you use a client script to [[Client_Script_Best_Practice#Use_Client_Scripts_to_Validate_Data|validate data]] or a reference qualifier to present a filtered list, data may change between the time the user fills in the fields and the time the user submits the form. This mismatch can cause a conflict or error. Business rules are an effective way to double-check critical input.
+
+For example, a request allows users to reserve items. When users fill out the request form, they can only select currently available items. If two people fill out a particular form at once and select the same item, the item appears to be available to both people because neither of them has submitted the form yet. If there is no business rule to double-check availability, ServiceNow assigns the same item to both requests. By using a business rule to re-verify item availability when the form is submitted, the second person receives a warning or other notification indicating the item has already been taken.
+
+
+'''Condition:''' current.cmdb_ci.changes()<br>
+'''Script:'''
+<source lang="javascript">
+/************************
+ *
+ * Double-check to ensure that no one else has selected and
+ * submitted a request for the same configuration item (CI)
+ *
+ ************************/
+doubleCheckCiAvailability();
+
+function doubleCheckCiAvailability() {
+
+    var lu = new LoanerUtils();
+
+    if (!lu.isAvailable(current.cmdb_ci, current.start_date, current.end_date)) {
+        gs.addErrorMessage(gs.getMessage('Sorry, that item has already been allocated'));
+        current.cmdb_ci = 'NULL';
+    }
+}
+</source>

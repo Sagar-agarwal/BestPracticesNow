@@ -1,0 +1,30 @@
+{{Technical Best Practices}} 
+[[Category:Planning Best Practices|*]]
+
+= Overview =
+
+While planning your ServiceNow implementation, keep these recommendations in mind to ensure effective results. While not explicitly technical in nature, they are beneficial to any organization implementing ServiceNow.
+
+= Review ServiceNow Features =
+
+SeviceNow offers many features to help streamline processes. Some of these features are architectural, such as providing a single source of record for ITSM information. Others are technical, such as integrating with a wide variety of external data sources. Learn how ServiceNow features provide more scalable and supportable solutions with the platform by checking the ServiceNow Wiki, asking members of the [http://community.servicenow.com/ ServiceNow community], or contacting ServiceNow [[Technical Support|Technical Support]].
+
+Assume you are building a change request process and are discussing approvals with the change process owner. One of the requirements is that approvals be executed by attaching emails to change records, a process necessitated by the limitations of your current platform. While reviewing ServiceNow features, you learn that the built-in approval functionality can streamline the process and increase the efficiency of the related audit process and decide to use that feature.
+
+= Leverage Rapid Prototyping =
+
+In many organizations, software development starts with product owners scoping out the requirements for a given release or solution.  Then, developers implement the requirements in the software.  The implementation time of this traditional approach can be extended as questions arise, conflicts are challenged, gaps are discovered, and documents are updated through a change control process. Some organizations may even require developers to document technical details in a low-level design document before a solution has been developed when, in reality, developers often do not reach an exact solution until they have tried several options.
+
+The flexible, easily-implemented architecture of ServiceNow allows developers to quickly build a prototype, or proof-of-concept. Doing so allows them to identify deliverables, as well as refine and document the requirements during the build-out process. Using this process can move development from a ''define'', ''define'', ''develop'', ''develop'', ''review'', and ''rework'' process to a ''design a little'', ''develop a little'', ''review'', and ''repeat'' process that can eliminate much rework.
+
+= Use an Iterative Development Process =
+
+Break the build process down into defined stages with periodic reviews along the way. Do not take the time and effort to define and document all the requirements at once. Delays can occur as developers discover gaps and conflicts. Instead, create proof-of-concept drafts, review them with the process owner and other stakeholders to get agreement on what has been developed, and make any needed adjustments before moving to the next stage. By building in stages, you can discover and address issues more quickly. 
+
+For example, work with the process owner to review the change request process. Learn what information is needed to quickly build the form and list layout. When this phase is complete, repeat the process for workflow, approvals, notifications, security, and so on.
+
+By defining and working in distinct stages and conducting periodic reviews, it is easier to make adjustments in the documentation and development processes before major issues arise.
+
+= Communicate Constantly =
+
+Throughout the design and implementation phases, developers and process owners should meet frequently to discuss issues, concerns, or questions as they arise. If the only communication is a weekly design review, the developer may wait up to a week to get input, a delay that can lead to a costly project setback. With regular communications, such delays are minimized and, ideally, eliminated.

@@ -1,0 +1,71 @@
+{{Technical Best Practices}} 
+[[Category:Planning Best Practices]]
+
+= Overview  =
+
+Administrators can change the look and feel, or ''theme'', of an instance for aesthetic reasons or to help distinguish it from other instances. For example, organizations often use multiple ServiceNow instances to separate development, testing, and production activities. To help users avoid accidentally changing the wrong instance, administrators can configure each with a visually distinct theme. Several approaches are available for defining an instance theme.
+
+= CSS Properties  =
+
+To customize properties that control CSS styles, navigate to '''System Properties > CSS'''. Specify colors using predefined [http://www.w3schools.com/cssref/css_colornames.asp color names], RGB decimals, or RGB hexidecimals. Using a different color scheme for each instance makes it easier to determine which instance you are using. The following CSS properties are available: 
+
+*Banner text color.
+*Banner and list caption background color.
+*Font used in forms and lists.
+*Base font size, which can be adjusted with the [[Navigating Applications#Application Navigator Header|global font controls]].
+*Button styles, including background color, border color, border width, and text color.
+*Field status indicator colors, including those for Changed, Mandatory Populated, Mandatory Unpopulated, and Read-only.
+*List cell vertical alignment.
+*Navigator menu styles, including text font size, background color, text color.
+*Header font name and size.
+*List and form caption color override.
+*Global text search background color, both for catalog results and knowledge base results.
+
+= UI Properties  =
+
+To customize UI properties, navigate to '''System Properties > UI Properties'''. Some of the elements that can be customized with UI properties include:
+
+*Icons used in the activity formatter. 
+*Background colors for '''Additional Comments''' and '''Work Notes''' fields. 
+*Button placement on forms.
+
+= Menu Categories =
+
+{{Menu Categories}}
+
+= Business Service Map Properties  =
+
+To customize the [[Business Service Map|business service map]], navigate to '''BSM Map > Map Properties'''. Elements that can be customized with BSM map properties include: 
+
+*How many child nodes to display when too many children exist for a parent CI. 
+*Color used for the collapsed node when too many children exist for a parent CI. 
+*Text style used for the collapsed node when too many children exist for a parent CI. 
+*Color of: 
+**Affected neighbor node 
+**Node with an open change request 
+**Node with an outage 
+**Node with an open incident 
+**Recently expanded nodes
+
+= Survey Question Header Colors  =
+
+{{:Changing Survey Question Header Color}}
+
+To change the color of the survey text color (from black to white, for example):
+
+#Enter '''sys_properties.form''' into the [[Navigating Applications|navigation filter]] to display a new Property form.
+#Name the new property <tt>css.list.row.survey.text.color</tt> and enter the hexadecimal value of the desired color into the '''Value''' field.
+#Save the property.
+
+= UI Customization =
+
+Administrators can also customize the UI with scripts. For more information, see [[UI Scripts]]. For an example of a [[Useful Scripts portal|useful script]] for altering the look and feel of the instance, see [[Display Task Number as Window Title]].
+
+= Additional Information = 
+
+For more information on instance themes, see:
+
+*To create a themed front-end for users, see [[Content Management Overview]].
+*To modify the banner image and text, see [[Modifying the Banner]]. 
+*To use CSS theme packages, see [[CSS Theme Support]]. 
+*To apply styles to individual fields, see [[Defining Field Styles]].

@@ -1,0 +1,251 @@
+{{Technical Best Practices}} [[Category:Planning Best Practices|*]]
+
+__NOTOC__
+{{LimitedTOC|2}}
+
+= Overview = 
+
+An application and its [[Navigation and the User Interface|user interface]] should be intuitive, functional, and easy to navigate, from both the user's and administrator's perspective. Good design principles should influence your decisions about structuring information in ServiceNow.
+
+= Tables =
+
+It is important to become familiar with some of the most commonly used tables and fields. Key tables include, but are not limited to:
+
+*[[Task Table|Task [task]]] and extended tables, such as Incident [incident], Problem [problem], Change Request [change_request], Request [sc_request], and Requested Item [sc_req_item]
+*Configuration Item [cmdb_ci] and extended tables, such as Hardware [cmdb_ci_hardware], Software [cmdb_ci_spkg], Computer [cmdb_ci_computer], Service [cmdb_ci_service], Server [cmdb_ci_server], and Network Gear [cmdb_ci_netgear]
+*User [sys_user]
+*Group [sys_user_group]
+*Knowledge [kb_knowledge]
+
+Understanding the functions of key tables and their associated fields will help you better determine whether they have attributes in common with the new table you plan to create. If they do, consider extending the existing table instead of creating a new one.
+
+Explore the [[System Dictionary|system dictionary]] or see [[Tables and Classes]] for additional information about table structures.
+
+== Create Custom Tables ==
+
+Tables can either be created standalone or as [[#Know When to Extend a Base Table|extensions]] of existing base tables. For more information, see [[Creating a Custom Table]].
+
+{{Note|When you create a new table, remember to set one of the fields to '''Display<nowiki>=</nowiki>true''' in the system dictionary. This makes references show a [[Reference Fields#Display Values|display value]] rather than a [[Unique Record Identifier|sys_id]].}}
+
+=== Follow Naming Conventions ===
+
+Follow these guidelines when naming new tables:
+
+*Use singular suffixes (for example, use u_answer, not u_answers).
+*:The system automatically appends the letter "s" to the label value in list view. It also makes more sense when scripting to create an object like the following:
+*:<source lang="javascript">var answer = new GlideRecord('u_answer');</source>
+*If the table is part of the [[Introduction to Assets and Configuration|CMDB]], preface the table name with '''cmdb_ci''' (for example, u_cmdb_ci_mobile_phone) to help distinguish it as part of the CMDB table hierarchy.
+
+=== Know When to Extend a Base Table ===
+
+[[Creating a Custom Table#Extending a Table|Extending a base table]] incorporates all the fields of the original table and creates new fields for the new table. This inheritance is used to create major subcategories of data. In general, when you create a new table, it should extend a base table if:
+
+*The fields or attributes of an existing table are similar to the ones you want to use.
+*The scripts for an existing table are useful for the application.
+*The information contained in the new table is essential to the process that will use the table.  For example, if the process is task based, extending the Task [task] table may be a better option than creating a new table with many of the same fields. Similarly, if the process involves an asset (that is, a CI), extending one of the CMDB tables may be a better solution than creating a new table, as long as you extend a table that contains the majority of the fields you require.
+{{Note|Supporting data, such as department codes, customer zones, pay grades, and approval look-ups, typically do not have fields in common with existing ServiceNow tables and often require you to create standalone table.}}
+
+Also consider these guidelines when deciding whether to extend a table:
+
+*If the table contains items that need to be assigned, or if a workflow is involved, the new table should extend the Task [task] table.
+*If the table contains a list of assets or services, the new table extends the Configuration Item [cmdb_ci] table.
+*If the table contains an aggregated list of different items, such as incidents, service catalog requests, or problems, a table hierarchy is required. For example, a table with a list of tasks assigned to you is an extended table. A single list is not possible across multiple tables unless extended tables are used.
+
+= Fields = 
+
+Follow these suggestions to properly create, name, and use [[Introduction to Fields|fields]]. 
+
+== Distinguish Names from Labels == 
+
+The ''name'' of a field should be a concise summary of what it represents. The ''label'' is the text that displays on a form. When you [[Creating New Fields|create a new field]], provide a short, logical name for the field.  The label automatically mirrors the field name, with the exception of special characters like the question mark, and cannot be changed unless you [[Introduction_to_Fields#Changing_the_Field_Label_or_Hint|configure the label]].  
+
+*Poor field name: '''Why was this late?''' becomes u_why_was_this_late_
+*:This name is too long and the question mark has been changed to a confusing underscore character in the label. 
+:[[Image:field_name1.png|331px|border|field_name1.png]]
+
+*Better field name: '''Late reason''' becomes u_late_reason
+*:This name is short and intuitive. 
+:[[Image:Field name2.png|330px|border|Field name2.png]]
+
+You can customize the label of an inherited field without impacting the data, dictionary, or other underlying objects. For more information, see [[Introduction_to_Fields#Changing_the_Field_Label_or_Hint|Changing the Field Label or Hint]]. Be sure to keep labels as short as possible. Avoid questions such as ''What is the effective date of the request?''. Instead use ''Effective date'' and use the longer question in the field's hint.
+
+Also, be consistent in the capitalization of multi-word labels. Most default field labels only capitalize the first letter of the first word (save acronyms like CI).
+
+=== Keep Hints to One or Two Short Phrases ===
+The hint text is only visible for a few seconds after the user hovers their cursor over the field. If the text is too long, there may not be enough time for the user to read it. If several lines of text are required in the hint, options include:
+*Shorten the text on the hint
+*Use a [[Field_Label_Help|link to more verbose help]] in the field label
+*Use [[Context-Sensitive_Help|context sensitive help]] to address help on several fields at once
+
+{{Note|If you [[Introduction_to_Fields#Changing_the_Field_Label_or_Hint|configure the label]] of an inherited field, be sure you change the '''Table''' field accordingly and use '''Insert''' or '''Insert and Stay''' (rather than Save or Update) to avoid overwriting the existing label.}}
+
+== Reuse and Consolidate Fields ==
+
+Avoid creating unnecessary fields. There are often existing alternatives available in the system.
+ 
+*Relabel unused fields.
+*:For example, if you want a '''Title''' string field in a table, but the table already contains an unused string field called '''Short Description''', simply configure the unused field and give it a new label.
+
+*Consolidate fields with similar functions.
+*:For example, instead of creating two date fields called '''Acceptance date''' and '''Rejection date''', create a single field called '''Decision date'''.
+
+*Use existing fields when [[Creating a Custom Table#Extending a Table|extending a table]].
+*:For example, if you want to create date fields to track work start and end on a table extended from Task [task], use the existing '''Work Start''' and '''Work End''' fields.
+
+== Add Fields to the Appropriate Table ==
+
+Avoid adding fields to a base table such as Task [task]. Fields in a base table are available to all child tables, as are business rules that run on the field or table. If you do add a field to a base table, ensure that it is required in more than one child table. If it is not required in all child tables, be sure to add an appropriate condition to the applicable business rules to prevent them from running on tables that do not require those fields. Failure to filter the business rules can result in updates to records where they are neither required nor desired.
+
+[[Image:Business_rule_filter.png|777px|border|Business_rule_filter.png]]
+
+== Choose the Correct Field Type ==
+
+Certain [[Introduction to Fields#Field Types|field types]] are better than others for particular types of data. When selecting a field type, consider the data that will be entered and what you want to do with that data.
+
+Use string fields only if consistent data is not required. Use choice lists, reference fields, or other types to limit options. For example, do not use the string type for a '''Name''' field that requires employee data. Instead, use the reference type to pull data from the User [sys_user] table.
+
+Limit the use of [[Referencing a Glide List from a Script|Glide list]] fields, such as [[Using Watch Lists|watch_list]], work_notes_list, and group_list. They are often unfavorable for reasons such as:
+*The values of a Glide list field are displayed in the order they were entered. To sort them numerically, alphabetically, or otherwise, requires specialized scripting. 
+*The values of a Glide list field display only the field from the referenced table that is designated as the display field, such as user name or task number. There is no way to show more than the single field in a Glide list.
+
+[[Using Related Lists|Related lists]] are generally a good alternative to Glide lists for reasons such as:
+*Users can easily sort a related list by clicking the column headings. 
+*Related lists display multiple fields from the related table, as well as "dot-walked" related information. 
+*Related lists can also display long lists of items without creating a distracting form layout. 
+
+Glide lists are ideal for short lists of five or fewer records that do not require more than one field displayed, and which require a minimum of business logic. A related list would be preferable, for example, to list regulatory compliance types on a CI and display access controls, workflows, or other logic checks.
+
+[[File:Watchlist_Expanded2.png|border|left|frame|Values in Glide list fields cannot be sorted or rearranged.]] <br style="clear:both;" />
+
+=== Change Field Type with Caution ===
+
+{{Warning|Changing a field type, such as converting a 40-character string to an integer, can have damaging effects on the underlying database. ''Never'' change a field type in a production instance when there is data in the field.}}
+
+As a rule, do the following:
+*Change a field type only in a test instance.
+*Make sure there is no important data in the field that may be compromised.
+*Do not export field type changes to a production instance unless the change has been thoroughly tested in a test instance. 
+
+Instead of changing a field's type, create a new field with the correct type and migrate the data from the old field to the new field and, optionally, delete the original field.
+
+== Use Dictionary Overrides == 
+
+In an extended table structure, you may find that the same field in different tables requires different default values, reference qualifiers, attributes, or other properties. For example, the default state of a task is Open (1); however, Incident requires that the default state be Active (2).  If you changed the default value of the '''State''' field on the Incident form by selecting '''Configure Dictionary''' ('''Personalize Dictionary''' in versions prior to [[Fuji Release Notes|Fuji]]) from the '''State''' field context menu, you would be changing it at the task level.  This could potentially impact other applications that extend from the Task table, such as Change, Problem, and Service Catalog.
+
+Instead, use [[Dictionary Overrides|dictionary overrides]] to control a field independently from its parent counterpart. For more information, see [[Dictionary Overrides#Overriding a Column Display Value|Overriding a Column Display Value]].
+
+{{Note|Dictionary overrides are inherited by extended tables. It may be necessary to define additional overrides to change the value of fields on extended tables. For example, if you define the default value of cmdb_ci.install_status to be 3, and create an override for the same field on cmdb_ci_hardware to be 5, then all tables extended from hardware will also default to 5. If you want cmdb_ci_computer.install_status to be 3, you will need another override.}}
+
+== Reference Choice Lists for Repetitive Options ==
+
+{| border="1" cellspacing="0" cellpadding="5" align="center"
+! ServiceNow Choice List Best Practices
+|-
+| {{#ev:youtube|I-m-egREJ5M}}
+|}
+
+If you find that you have multiple choice lists with the same options, consider using a single choice list as a source of options and referencing it from the other choice lists that require the same values.
+
+For example, your requirements call for several choice list fields with the options "Yes" and "No". These are: u_request.u_approval, u_contract.u_fda, sys_user.u_itar. Rather than [[Customizing_Choice_Lists|creating the same "Yes" and "No" options]] three times, create them once for u_request.u_approval, then follow these steps to make u_contract.u_fda and sys_user.u_itar point to the same options.
+#[[Introduction_to_Fields#Creating_New_Fields|Create]] the choice field as you normally would.
+#Once the field is placed on the form, right-click the field label and choose '''Configure Dictionary''' ('''Personalize Dictionary''' in versions prior to [[Fuji Release Notes|Fuji]]).
+#In the dictionary entry form, change the '''Choice table''' option to point to your source table (e.g. Request [u_request])
+#Change the '''Choice field''' to point to the field with the options you want to use (e.g. Approval)
+#Click '''Update'''
+
+This allows all options for those fields to be centrally managed. If requirements change to include "Maybe", you only need to change one list. This method may also reduce translation services costs where those services charge by the number of items being translated.
+
+== Use Letters, Numbers, and Underscores in Choice List Values ==
+
+Adding choice list options with spaces or other special symbols may cause issues with the condition field. Get in the habit of changing the choice list values to only contain letters, numbers, and underscores only if the choice list labels did not contain them originally.
+
+For example, you have created a choice list field called "Shark". When you [[Customizing_Choice_Lists|added the options]] "Mako", "Great White", "White Tip", "Black Tip", and "Nurse", everything looked fine until you tried creating a UI policy with a condition '''Shark''' | '''is''' | '''Great White''' and noticed it did not work. This is because the system translated the choice list label <tt>Great White</tt> to the value <tt>Great%20White</tt>. Unfortunately the condition field in the UI policy (and other forms) has issues with "%20".
+
+The solution is to right click on the Shark field label and choose '''Show Choice List". In the '''Value''' column, change the entry from "Great%20White" to "great_white" (or something similar containing only letters, numbers, and underscores.)
+
+= Forms = 
+
+For each table you create, make sure there is a well-designed form to manage the data. For an overview of form elements and their functions, see [[Using Forms]].
+
+This step is often overlooked for simple tables with only a few columns or for tables not presented directly to the user, such as logs or statistical information. 
+
+Design forms thoughtfully, keeping the following guidelines in mind:
+
+*The form should read from top to bottom, and left to right.
+*Important fields should be positioned at the top of the form.
+*The reference name or number field should be the first field on the form (top left).
+*The form should be as short as possible. If the form contains many fields:
+**Arrange the topmost fields in two columns by using [[Enabling Multiple Form Splits|form splits]].
+**Use [[Annotating Forms|annotations]] or [[Creating a Form Section|sections]].
+*If a choice list contains more than 15-20 items, consider using a reference field to a table of choices to prevent scrolling through a long list of options
+*Large string fields, such as short descriptions and comments, should span the full width of the form below the columns of shorter fields.
+
+When you create a form, you may want to create multiple [[View Management|views]]. To see which views exist in an instance, navigate to '''System UI > Views'''. 
+
+[[View Management#View Rules|View rules]] define conditions you can apply to certain predefined views for forms. This can be useful when you want to streamline forms or when requesting additional information. To define a view rule, navigate to '''System UI > View Rules'''.
+
+= Lists = 
+
+Lists can be configured to change their layout and appearance. When [[Configuring Lists|configuring lists]], consider the following:
+
+*Use the record number or other unique information as the first column. '''Do not''' use a reference field as the first column. Clicking a reference value opens the referenced record, ''not'' the record that references it. 
+*:For example, if the Incident list showed '''Caller''' as the first column, a user might click the caller name, expecting to open the incident record. However, clicking the '''Caller''' opens the caller's user record, not the incident.
+::[[Image:Incident Column.png|border|left|frame|Clicking the caller name opens the user record, not the incident record.]]
+<br style="clear:both;" />
+*Do not display HTML, long string or journal fields, or other overly complex fields in list views.
+*Limit the number of columns to prevent horizontal scrolling.
+*Review the [[Configuring_Lists#Configuring_List_Controls|list controls]] and [[Configuring_Lists#Configuring_List_UI_Actions|list UI actions]] to understand which users have access to the related operations. 
+*:For example, if you expect users to create new incidents from a [[Record Producer|record producer]] instead of the Incident list, configure the Incident list controls to omit the '''New''' button.
+
+For performance reasons, consider limiting the number of records that a list can show per page. Users can use the [[Using Lists#Title Bar|title menu]] to '''Show''' more or fewer records per page. The available values are 10, 15, 20, 50, and 100, by default. Keep in mind that lists displaying more rows per page load more slowly. This is most noticeable when a form contains related lists with many records.
+
+To change the available rows per page options, navigate to '''System Properties > System''' and locate the property ''' 'Items per page' drop-down options (comma separated, no spaces)'''. Enter the values you want to make available to users.
+
+{{Note|There is no optimal number of rows to allow per page. Administrators can experiment with different options to determine what yields the best results for their environment.}}
+
+= UI Actions =
+
+Use [[UI Actions|UI actions]] to simplify processes and guide user activity on forms or lists.
+
+== Create Well-Designed Actions == 
+
+Intuitively designed buttons and links make it easier to perform actions. In general, it is better to create a single button for an action than to have the user change a field value and then click a button to commit the update. Well-designed UI actions can help prevent users from making bad selections.
+
+*Poor design: To close an update set, the user must select '''Complete''' from the '''State''' field, then click '''Update'''.
+*:The process takes two steps and is not immediately obvious from looking at the form. It also allows the user to change the state back to '''In progress''', which should be avoided because it would cause all changes captured by the update set to be ignored by the target system.
+*Good design: Make the '''State''' field read-only and define a UI action labeled '''Complete Update Set''' which sets the state and updates the record. 
+
+Follow these general guidelines when creating UI actions:
+*Give UI actions distinct names, which can be checked to validate that a script ran.
+:[[Image:UI_action.png|408px|border|UI_action.png]]
+
+*Use conditions. For example, include [[GlideRecord#canWrite|<tt>current.canWrite()</tt>]] to verify security policy.
+:[[Image:UIactionCondition.png|504px|border|UIactionCondition.png]]
+
+*Create buttons for common actions on forms.
+**Give buttons clear names that are as short as possible.
+**Avoid creating too many buttons, which makes the header appear cluttered. Consider using the context menu and form links, instead.
+
+== Leverage Business Rules and Script Includes ==
+
+Try to keep the script of a UI action as small as possible. If you are updating a record, use existing [[Business Rules|business rules]] to accomplish desired functionality instead of recreating the functionality in a UI action. If a business rule does not exist for the desired functionality, consider creating one to do the task required. Separating the UI action logic from the business rule logic makes the system easier to test and maintain. 
+
+For example, in the following case, the '''Close Change''' button sets the state. One or more business rules can recognize the state change and perform other related operations, such as closing all child change tasks or sending notifications.
+
+[[Image:Close change.png|405px|border|Close change.png]]
+
+If the UI action requires more than just a few lines of script, consider creating a [[Script Includes|script include]]. Script includes make your code more scalable, testable, and manageable.
+
+= Application Navigator =
+
+Follow these guidelines for creating applications and modules that appear in the [[Navigating Applications|application navigator]] on the left side of the screen. 
+
+*Give [[Administering Applications and Modules#Creating a Module|new modules]] relevant, descriptive names. Remember that users will use the navigation filter to search for a module.
+*:For example, '''Log''' is a poor name choice for a module name. It is too generic and does not provide insight into what the module does. '''Incoming Remedy Log''' is a much better name.
+*Use section separators to group modules in a meaningful way.
+*Choose professional, intuitive icons for modules.
+*Be consistent with module names and icons. For example, a list of active requests should be labeled Open and should have the same icon as the Open module in the Incident, Problem, and Change applications.
+*Avoid creating Search modules that use the '''Search Screen''' link type. 
+*:Search modules can be confusing to users because they look like data entry forms. Additionally, they do not offer very flexible searches. Use list filters, instead.
+
+{{Note|If your module is for displaying records of a large table (>50,000 records), ensure you add a filter. An unfiltered list can be very slow to load causing performance issues and a bad user experience.}}

@@ -1,0 +1,79 @@
+[[Category:Planning Best Practices]] {{Technical Best Practices}}
+__TOC__
+
+=Overview=
+
+Before creating custom solutions built on the ServiceNow platform, it is important for developers to understand the underlying requirements written by their process owners. 
+
+Developers need to ask questions and gain a complete understanding of the requirements they are being asked to meet.  A complete understanding of the ''what'' and ''why'' of the requirements can help drive the ''how''.
+
+=Types of Requirements=
+
+A requirement documents a single need for a particular product or service. Software development uses two main types of requirements: functional and technical.
+
+A successful implementation is one where the correlation between functional requirements and the corresponding technical requirements and constraints are well-communicated to the team. Developers further clarify this correlation by asking questions about the requirements.
+
+== Functional Requirements == 
+Functional requirements define what the system is expected to do, either at a high level or a low level, and are often used to create use cases.They are used to define:
+
+*Types of data that can be entered, and by whom.
+*Workflows performed by the system.
+*System reports or other outputs.
+*Regulatory requirements to be met.
+
+Functional requirements do not include design choices. 
+
+*Poor functional requirement: The system shall store user information in an Oracle database including name, DOB, address, and SSN.
+*Good functional requirement: The system shall store user information including name, DOB, address, and SSN.
+
+== Technical Requirements == 
+Technical requirements pertain to the technical aspects of the system, such as performance-related issues, scalability, and manageability.  They define specific tasks that must be performed to satisfy the functional requirements defined for the solution.  
+
+*Poor technical requirement: The system must be user friendly.
+*Better technical requirement: The user interface shall be menu driven. It shall provide dialog boxes, help screens, radio buttons, drop-down list boxes, and slushbuckets.
+
+= Clarify the Functional Requirements =
+
+Developers should review functional requirements to ensure there are no gaps. It is not uncommon, especially when a requirement seems overly simplistic, for a process owner to write a requirement that says something like ''Add a field to this form to track X.'' This is not a functional requirement, because it does not identify the problem that needs to be solved or what the business need is. 
+
+As you explore functional requirements with the process owner, some key questions to ask are:
+
+*What problem are we trying to solve?
+*:Ask additional questions to determine what the true requirement is.   
+*What is the business driver behind this requirement?  
+*:Determining, for example, whether the source of a requirement is a problem or an enhancement request may influence how you solve it. 
+*Can you help me understand what you are after?
+*:A simple followup question that can save you time and the possibility of rework.
+*What are the inputs?
+*What are the outputs?
+*Are there any walk-through scenarios, use cases, or examples?
+
+The requirements writer may understand what is required to achieve the goal. But if developers simply add a field every time someone asks for it, the forms and the processes that use them will soon be out of control. By asking questions, developers can better understand the reasoning behind requirements and can offer better solutions.
+
+= Clarify the Technical Requirements =
+
+Developers should also keep these key questions in mind as they create solutions that meet technical requirements:
+
+*Is there already a technical solution to this requirement?
+*:Before you create a script or write a function, do some research to find out if the functionality you need already exists. Reusing existing code or scripts can save time and effort.  Start your research in the ServiceNow Wiki and [http://community.servicenow.com/ Community].
+*Is the solution scalable?
+*:Keep in mind the possibility that the requirements you are focusing on may expand significantly over time. For example, a solution that works for the 100 records that exist at the starting point may not work for 100,000 or 10,000,000 records in the future. You may need to load or create test records to better understand what happens to your solution as the scale increases.
+*How does this solution affect various users?
+*:Consider both general and specific implications and design the solutions accordingly. For example, does a redesigned form load faster or slower? Does a new field on a form need to be mandatory for all users or is it important only to certain departments?
+*Is this solution flexible?
+*:If requirements change, how quickly can changes be made? Is a developer required or does it simply involve changing data?
+*Does this solution require any changes to platform licensing?
+*:For example, a solution that allows end users to manage a particular set of data may require creating a new role that grants those users access.
+
+{{Note|Be aware that creating a new role may affect your platform licensing in terms of the number of licensed users you have.  For more information, see [[Counting Licensed Users]].}}
+
+= Input and Output Considerations =
+
+As you identify input and output for your solution, create a test plan to test both valid and invalid inputs to ensure the correct outputs. For example, if a requirement calls for a date field, consider questions like: 
+
+* What happens if a user enters no date or enters an invalid date, such as a date in the past? 
+* What should the system do when it encounters invalid input? 
+
+The more cases you consider and account for in a solution, the more time and money you will save in the long run.
+
+In many cases, there is more than one technical solution that meets a given requirement. Consider as many available options as possible and understand the impact of each rather than offering an immediate recommendation. If more than one technical option is available, offer two or three preferred options, along with your recommendation and justifications.

@@ -1,0 +1,113 @@
+{{Technical Best Practices}} [[Category:Development Best Practices]]
+__TOC__ 
+
+= Overview  =
+
+Adding descriptive comments to your scripts and customization records is an important aspect of documenting the functionality or use of a particular item.
+
+= Comment Your Code  =
+
+When you write scripts, include comments with information that will be useful to anyone who needs to update the script later. What may seem obvious today may not be clear in the future, especially on a complicated section of code. The comments should be well-written and clear, just like the code they are annotating. 
+
+''Single line comments'' start with a double forward slash (//) and can be placed anywhere on the line. Everything after the // and up to the new line is considered a comment. For example: 
+
+<source lang="javascript">
+ // Initialize variables
+ var count = 0;
+ 
+ if (count > MAXVAL) // Check if we're over the limit 
+</source> 
+
+''Block comments'' start with a forward slash and one asterisk (/*) and end with the reversed combination (*/). Everything between the markers is considered a comment. Adding extra asterisks, like those shown in this example, can make it easier to locate blocks of comments.  
+
+<source lang="javascript">
+ /***
+  * getRiskEnvironment - determine the environment of the CIs to calculate the risk
+  *
+  * @param: chg - GlideRecord of change record
+  * @return: result - Highest environment value of CIs: 1=production, 2=QA, 3=test, 4=dev, 0=error
+  *
+  ***/
+</source>
+
+
+== Make Comments Helpful ==
+
+Clearly describe the purpose of functions and all inputs and outputs. For example:
+
+<source lang="javascript">
+/***
+ * putUserPref - save a user preference/value pair for this user
+ *               If the preference already exists, check the current value and update if necessary
+ *
+ * @param prefName - name of the user preference
+ * @param prefVal - string value to save
+ * @return - None
+ *
+ ***/
+</source>
+
+Keep comments as accurate as possible. Erroneous comments can make programs even harder to read and understand. Also be sure to keep comments up to date as the scripts are updated.  The comment in this code section does not clearly describe its function. 
+
+<source lang="javascript">
+//
+// Send notifications to the user's manager
+//
+function get5RecentRecords() {
+
+    var list = [];
+    var task = new GlideRecord('task');
+
+    task.addQuery('active', true);
+    task.orderByDesc('sys_updated_on');
+    task.setLimit(5);
+    task.query();
+
+    while (task.next()) {
+        list.push(task);
+    }
+
+    return list;
+}
+</source>
+
+Write meaningful comments. Focus on what is not immediately visible. For example:
+
+<source lang="javascript">
+// Unhelpful comment:
+    var i = 0; // Set i to 0
+
+// Better comment:
+// Set this record to never remind again
+     gr.return_reminder = gs.nowDateTime();
+     gr.update();
+</source>
+
+= Add Descriptions to Records  =
+
+Adding descriptions makes it easier to understand the contents of a record. Important records to describe include [[Business Rules|business rules]], [[UI Actions|UI actions]], and [[Using Access Control Rules|ACL rules]]. Most ServiceNow records have at least one field for descriptions or comments, such as the '''Description''' field. This field is not always visible by default and may need to be [[Configuring Forms#Configuring Forms|added to the form]].
+
+Keep these guidelines in mind:
+*At a minimum, describe what the item does. For example, ''Close all other child tasks belonging to this parent task.''
+*For modified baseline objects, describe why it was necessary to change the baseline object and what was changed. For example, ''The change process owner required the Add Relationships functionality after the approval state.''
+*[Optional] Include instructions for how to revert the item to the original version. For example, ''The original version of this record is available as an attachment to this record in the acmedev instance. Download the attachment and import it to restore factory settings.''
+
+{{Note|Use the field for descriptions or comments to include revision notes about a record, such as modifications made, defect numbers, or authors.}}
+
+{{Note|Inactivating a record such as a business rule does not preclude ServiceNow from upgrading that record in the future. If all you do is uncheck the Active field, then do not add a description or ServiceNow will see this as additional changes to the record and you will not receive additional upgrades.}}
+
+== View Descriptions in Upgrade History ==
+
+The upgrade history shows whatever fields have changed: Active, Updated by, Description, Comments, Script, and so on.  When viewing [[Upgrade History#Reverting Customizations|skipped upgrade detail]], you can use the '''File differences''' view to display a comparison between the '''Customized''' (current) and '''Out-of-box''' versions. This can help you decide whether to '''Revert to Out-of-Box'''. 
+
+If no descriptive text was added to describe what changed, the file differences view shows only the name of the person who updated the record and when it was updated. This may not be enough information to make a decision.
+
+[[Image:Comment-1.png|border|550px|Comment-1.png]] <br>
+
+If a description or comment was added to describe what changed, that text appears in the file differences view. This information is helpful only if the text is clear. For example, the following description is too vague to be useful.
+
+[[Image:Comment-2a.png|border|550px|Comment-2a.png]] <br> 
+
+Ideally, the description should explain why you made the change and provide direction for the future, if applicable. The following description contains excellent detail:
+
+[[Image:Comment-3a.png|border|550px|Comment-3a.png]] <br>
