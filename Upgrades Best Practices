@@ -179,6 +179,18 @@ Each upgrade cycle is an opportunity to evaluate prior upgrade history records. 
 
 ==Manage Customizations==
 
+If a base system object is modified, then it will not be upgraded and modified during an upgrade.  However, if the base system object is just marked active=false, then it will still be upgraded and modified.  Therefore, when customizing a base system object it is best practice to make a copy of the base system object, edit the copy so the original, mark the original as active=false.
+
+This allows the original version to receive updates during upgrades in case you ever want to quickly review the original out-of-box version or return to using the out-of-box version without having to perform an entire upgrade and [[#allow an upgrade to overwrite a customization|allow an upgrade to overwrite a customization]].  This also give you the ability at any time later to compare the inactive but upgraded original out-of-box version to the current in-use customized version and add in any new enhancements that are now in the original out-of-box but are not yet integrated into the customized version that came from an older version before the upgrade(s).
+
+To follow this best practice for customizing base system objects:
+
+# Open the original out-of-box version and mark the '''active''' field as ''''false''' or '''unchecked'''
+# Make a copy of the original out-of-box object by right-clicking the header and select '''insert''' or '''insert and stay'''
+# From this new, customized version mark the '''active''' field as ''''true''' or '''checked'''
+# Make any modifications to this new, active, customized version
+
+
 If viewing the upgrade history shows that a base system object was skipped during the previous upgrade, determine if you want to revert the object back to base system status so it is upgraded automatically in the future. For more information, see [[Upgrade_History#Reverting_Customizations|Reverting Customizations]]. 
 
 When an object is customized, a corresponding record is added in the Customer Update [sys_update_xml] table. The table maintains the current version information for all objects that have been modified.  To prevent customizations from being overwritten by system upgrades, the upgrade process automatically skips changes to objects that have a current version in the Customer Update table. For more information about the Customer Update table and how customizations are tracked, see [[System_Update_Sets#Update_Sets_Tables|Update Sets Tables]].
